@@ -51,7 +51,7 @@ onMounted(() => {
   const texture = new THREE.TextureLoader().load('/bg-image.JPG')
 
   // Build fragments — 3 vertical segments
-  const R = 1.8 // Slightly larger
+  const R = 1.1 // Smaller
   const numPieces = 3
 
   for (let i = 0; i < numPieces; i++) {
@@ -76,22 +76,23 @@ onMounted(() => {
 
     const mesh = new THREE.Mesh(geo, mat)
 
-    // Assembled position — origin
-    const assembledPos = new THREE.Vector3(0, 0, 0)
+    // Offset the whole globe downward slightly to avoid touching the navbar
+    const verticalOffset = -0.1
+    const assembledPos = new THREE.Vector3(0, verticalOffset, 0)
 
     // Shattered positions — distinct directions for the 3 pieces
     let shatteredPos, shatteredRot
     if (i === 0) {
       // Left Top
-      shatteredPos = new THREE.Vector3(-1.8, 0.8, -0.5)
+      shatteredPos = new THREE.Vector3(-1.2, 0.4 + verticalOffset, -0.3)
       shatteredRot = new THREE.Euler(0.3, -0.4, 0.2)
     } else if (i === 1) {
       // Right Top
-      shatteredPos = new THREE.Vector3(1.8, 0.8, -0.5)
+      shatteredPos = new THREE.Vector3(1.2, 0.4 + verticalOffset, -0.3)
       shatteredRot = new THREE.Euler(0.3, 0.4, -0.2)
     } else {
-      // Bottom Center - shifted to the right for a better V
-      shatteredPos = new THREE.Vector3(0.8, -1.5, 0.5)
+      // Bottom Center
+      shatteredPos = new THREE.Vector3(0.4, -0.9 + verticalOffset, 0.3)
       shatteredRot = new THREE.Euler(-0.5, 0, 0)
     }
 
