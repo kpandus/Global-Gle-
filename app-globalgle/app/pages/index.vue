@@ -31,6 +31,10 @@ onMounted(async () => {
   const btns = $('.hero-btns')
   const globeCanvas = $('#globe-canvas')
 
+  // Initial state forced by JS to ensure no flash
+  gsap.set(title, { opacity: 0 })
+  gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
+
   ScrollTrigger.create({
     trigger: '#hero',
     start: 'top top',
@@ -50,7 +54,7 @@ onMounted(async () => {
       const appearanceStart = heroH * 0.75
       const appearanceEnd = heroH * 0.85
 
-      // Buttons are visible immediately from scrollY = 0, but hide when journey starts
+      // Buttons are visible immediately from scrollY = 0
       if (scrollY < appearanceEnd) {
         gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
       } else {
@@ -70,8 +74,8 @@ onMounted(async () => {
 
       // 3. THE LANDING JOURNEY
       if (scrollY > appearanceEnd) {
-        const journeyP = Math.min(1, (scrollY - appearanceEnd) / (heroH + (sceneH * 0.2) - appearanceEnd))
         const landingPoint = heroH + (sceneH * 0.2)
+        const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
         
         const targetY = -window.innerHeight * 0.38
         const targetScale = isMobile ? 0.35 : 0.3
@@ -429,6 +433,7 @@ html { scroll-behavior: auto; }
   letter-spacing: 0.1em;
   color: #fff;
   will-change: transform, opacity;
+  opacity: 0;
 }
 .hero-letter { display: inline-block; position: relative; }
 
@@ -436,7 +441,7 @@ html { scroll-behavior: auto; }
   display: flex;
   align-items: center;
   pointer-events: all;
-  opacity: 0;
+  opacity: 1;
   border-radius: 100px;
   padding: 5px;
   background: rgba(8,8,8,0.48);
