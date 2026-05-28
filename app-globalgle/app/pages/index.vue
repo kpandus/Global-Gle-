@@ -34,47 +34,51 @@ onMounted(async () => {
   ScrollTrigger.create({
     trigger: '#hero',
     start: 'top top',
-    end: `bottom+=${sceneH} top`, // Covers Hero + Scene section
+    end: `bottom+=${sceneH} top`, 
     scrub: 1,
     onUpdate: (self) => {
       const scrollY = window.scrollY
       const isMobile = window.innerWidth < 768
 
-      // 1. Globe Progress (0 to 1 over first 80% of Hero)
+      // 1. Globe Progress
       const globeP = Math.min(1, scrollY / (heroH * 0.8))
       if (threeEarth.value?.setScrollProgress) {
         threeEarth.value.setScrollProgress(globeP * 0.35)
       }
 
-      // 2. Title & Buttons Appearance - Immediate after globe
-      // Earth forms by (heroH * 0.8). 
+      // 2. Title & Buttons Appearance Logic
       const appearanceStart = heroH * 0.75
       const appearanceEnd = heroH * 0.85
 
+      // Buttons are visible immediately from scrollY = 0, but hide when journey starts
+      if (scrollY < appearanceEnd) {
+        gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
+      } else {
+        gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
+      }
+
+      // Title remains delayed (appears when globe is near finish)
       if (scrollY < appearanceStart) {
-        gsap.set([title, btns], { opacity: 0 })
+        gsap.set(title, { opacity: 0 })
       } else if (scrollY < appearanceEnd) {
         const revealP = (scrollY - appearanceStart) / (appearanceEnd - appearanceStart)
         gsap.set(title, { opacity: revealP, scale: 1, y: 0, color: '#fff' })
-        gsap.set(btns, { opacity: revealP, y: 0 })
+      } else {
+        // Keep title visible during journey and docking
+        gsap.set(title, { opacity: 1 })
       }
 
       // 3. THE LANDING JOURNEY
-      // Start traveling as soon as the title is fully revealed
-      const transitionStart = appearanceEnd 
-      const landingPoint = heroH + (sceneH * 0.2)
-      
-      if (scrollY > transitionStart) {
-        const journeyP = Math.min(1, (scrollY - transitionStart) / (landingPoint - transitionStart))
+      if (scrollY > appearanceEnd) {
+        const journeyP = Math.min(1, (scrollY - appearanceEnd) / (heroH + (sceneH * 0.2) - appearanceEnd))
+        const landingPoint = heroH + (sceneH * 0.2)
         
-        // Raising the target position aggressively high (30% above center)
         const targetY = -window.innerHeight * 0.38
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
         let yPos = journeyP * targetY
 
-        // ATTACHMENT: Once scrollY > landingPoint, we offset by scroll to "pin" it to the cap
         if (scrollY > landingPoint) {
            yPos -= (scrollY - landingPoint)
         }
@@ -83,21 +87,16 @@ onMounted(async () => {
           y: yPos,
           scale: 1 - (journeyP * (1 - targetScale)),
           color: colorVal,
-          opacity: 1,
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
-
-        // Fade buttons out during transition
-        gsap.set(btns, { opacity: 1 - journeyP, pointerEvents: journeyP > 0.5 ? 'none' : 'all' })
         
-        // Fade Globe out as scene arrives
         if (globeCanvas) {
            const globeFadeP = Math.min(1, Math.max(0, (scrollY - heroH + 200) / 400))
            globeCanvas.style.opacity = 1 - globeFadeP
         }
       }
 
-      // 4. Final Exit (Leaving Scene section)
+      // 4. Final Exit
       const exitStart = heroH + sceneH - 200
       if (scrollY > exitStart) {
         const exitP = Math.min(1, (scrollY - exitStart) / 400)
@@ -304,7 +303,6 @@ onUnmounted(() => {
       <p class="faq-label" id="faq-label">Questions</p>
       <h2 class="faq-header" id="faq-head">What this <em>actually</em> does.</h2>
       <div id="faq-list">
-        <!-- ... FAQ items ... -->
         <div class="faq-item">
           <div class="faq-q">How does GlobalGle process cross-border payments? <span>+</span></div>
           <div class="faq-a">Our platform leverages direct integrations with correspondent banks and local payment schemes, routing transactions through the most efficient path in real time with full auditability.</div>
@@ -368,20 +366,33 @@ onUnmounted(() => {
           </div>
           <p class="footer-copy">© 2025 GlobalGle. All rights reserved.</p>
         </div>
-        <!-- ... Column 2 & 3 ... -->
+
         <div class="footer-col2">
           <nav>
-            <a href="#">Work</a><a href="#">About</a><a href="#">Services</a><a href="#">Portfolio</a><a href="#">Contact</a>
+            <a href="#">Work</a>
+            <a href="#">About</a>
+            <a href="#">Services</a>
+            <a href="#">Portfolio</a>
+            <a href="#">Contact</a>
           </nav>
         </div>
+
         <div class="footer-col3">
           <div class="social-header">Social</div>
           <div class="social-icons">
-            <div class="social-icon"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></div>
-            <div class="social-icon"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></div>
+            <div class="social-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </div>
+            <div class="social-icon">
+              <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </div>
           </div>
         </div>
-        <div class="footer-bottom-links"><a href="#">Privacy Policy</a><a href="#">Terms of Service</a></div>
+
+        <div class="footer-bottom-links">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
       </footer>
     </div>
   </main>
@@ -458,7 +469,7 @@ html { scroll-behavior: auto; }
   border-top: 1px solid rgba(255,255,255,0.05);
 }
 
-/* ────────────────────────────────────────────────────────────────────────── */
+/* NUMBERS */
 #numbers-section { width: 100vw; min-height: 120vh; background: #0a0d14; display: flex; align-items: center; justify-content: center; padding: 4rem; overflow: hidden; position: relative; z-index: 10; }
 .numbers-screen { position: relative; width: min(860px, 90vw); min-height: 480px; border-radius: 16px; border: 1px solid rgba(0,255,136,0.18); background: rgba(0,0,0,0.82); padding: 3.5rem 2.5rem 2.5rem; display: flex; flex-direction: column; justify-content: center; gap: 1.2rem; overflow: hidden; }
 .screen-chrome { position: absolute; top: 1.1rem; left: 1.4rem; display: flex; gap: 0.45rem; }
@@ -492,4 +503,8 @@ html { scroll-behavior: auto; }
 .footer-input-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.9rem 1.25rem; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; background: rgba(255,255,255,0.08); }
 .footer-input-row input { background: transparent; border: none; color: #fff; width: 100%; outline: none; }
 .footer-submit { padding: 1rem 2rem; background: #fff; color: #0a0d14; border: none; border-radius: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+
+@media (max-width: 768px) {
+  #footer { grid-template-columns: 1fr; }
+}
 </style>

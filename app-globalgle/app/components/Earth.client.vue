@@ -82,13 +82,13 @@ onMounted(() => {
     // Shattered positions — distinct directions for the 3 pieces
     let shatteredPos, shatteredRot
     if (i === 0) {
-      shatteredPos = new THREE.Vector3(-2.6, 1.4, -1.2)
+      shatteredPos = new THREE.Vector3(-1.8, 1.1, -0.8)
       shatteredRot = new THREE.Euler(0.5, -0.8, 0.3)
     } else if (i === 1) {
-      shatteredPos = new THREE.Vector3(2.6, -0.7, -1.8)
+      shatteredPos = new THREE.Vector3(1.8, -0.5, -1.2)
       shatteredRot = new THREE.Euler(-0.4, 0.6, -0.2)
     } else {
-      shatteredPos = new THREE.Vector3(0, -3.2, 1.2)
+      shatteredPos = new THREE.Vector3(0, -1.8, 0.8)
       shatteredRot = new THREE.Euler(0.8, 0.2, 0.5)
     }
 
