@@ -82,14 +82,17 @@ onMounted(() => {
     // Shattered positions — distinct directions for the 3 pieces
     let shatteredPos, shatteredRot
     if (i === 0) {
-      shatteredPos = new THREE.Vector3(-1.8, 1.1, -0.8)
-      shatteredRot = new THREE.Euler(0.5, -0.8, 0.3)
+      // Left Top
+      shatteredPos = new THREE.Vector3(-1.8, 0.8, -0.5)
+      shatteredRot = new THREE.Euler(0.3, -0.4, 0.2)
     } else if (i === 1) {
-      shatteredPos = new THREE.Vector3(1.8, -0.5, -1.2)
-      shatteredRot = new THREE.Euler(-0.4, 0.6, -0.2)
+      // Right Top
+      shatteredPos = new THREE.Vector3(1.8, 0.8, -0.5)
+      shatteredRot = new THREE.Euler(0.3, 0.4, -0.2)
     } else {
-      shatteredPos = new THREE.Vector3(0, -1.8, 0.8)
-      shatteredRot = new THREE.Euler(0.8, 0.2, 0.5)
+      // Bottom Center - shifted to the right for a better V
+      shatteredPos = new THREE.Vector3(0.8, -1.5, 0.5)
+      shatteredRot = new THREE.Euler(-0.5, 0, 0)
     }
 
     // Start shattered
@@ -109,8 +112,8 @@ onMounted(() => {
 
     const p = easeInOutCubic(scrollProgress)
     
-    // Auto-rotation always updates
-    autoRotY += 0.003
+    // Auto-rotation only happens when assembled (p increases)
+    autoRotY += 0.005 * p
 
     fragments.forEach((mesh, i) => {
       const origin = fragmentOrigins[i]
@@ -118,7 +121,7 @@ onMounted(() => {
       // Interpolate position
       mesh.position.lerpVectors(origin.pos, fragmentTargets[i].pos, p)
 
-      // Interpolate rotation back to zero
+      // Interpolate rotation. autoRotY now only applies when fully or partially assembled.
       mesh.rotation.x = origin.rot.x * (1 - p)
       mesh.rotation.y = origin.rot.y * (1 - p) + autoRotY
       mesh.rotation.z = origin.rot.z * (1 - p)
