@@ -77,7 +77,7 @@ onMounted(async () => {
         const landingPoint = heroH + (sceneH * 0.2)
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
         
-        const targetY = -window.innerHeight * 0.34
+        const targetY = -window.innerHeight * 0.36
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
@@ -90,12 +90,14 @@ onMounted(async () => {
            yPos -= offset
            
            // FADE OUT if it gets too high (near top/navbar)
-           // If yPos moves from -0.38vh toward -0.5vh (top), start fading
-           const topThreshold = -window.innerHeight * 0.42
+           const topThreshold = -window.innerHeight * 0.52
            if (yPos < topThreshold) {
               topFade = Math.max(0, 1 - (topThreshold - yPos) / 60)
            }
         }
+
+        // Hide navbar during journey
+        if (navbar) navbar.classList.add('nav-hide')
 
         gsap.set(title, {
           y: yPos,
@@ -109,6 +111,8 @@ onMounted(async () => {
            const globeFadeP = Math.min(1, Math.max(0, (scrollY - heroH + 200) / 400))
            globeCanvas.style.opacity = 1 - globeFadeP
         }
+      } else {
+        if (navbar) navbar.classList.remove('nav-hide')
       }
 
       // 4. Final Exit

@@ -67,6 +67,10 @@ const menuOpen = ref(false)
   border: none;
   background: #0a0d14;
   z-index: 100;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;
+}
+#navbar.nav-hide {
+  transform: translateX(-50%) translateY(-12px);
 }
 #navbar.scrolled {
   background: #0a0d14;
