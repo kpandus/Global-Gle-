@@ -114,7 +114,7 @@ onMounted(() => {
     const p = easeInOutCubic(scrollProgress)
     
     // Auto-rotation only happens when assembled (p increases)
-    autoRotY += 0.005 * p
+    autoRotY = (autoRotY + 0.005 * p) % (Math.PI * 2)
 
     fragments.forEach((mesh, i) => {
       const origin = fragmentOrigins[i]
