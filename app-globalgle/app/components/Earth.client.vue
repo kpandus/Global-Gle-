@@ -124,7 +124,7 @@ onMounted(() => {
 
       // Interpolate rotation. autoRotY now only applies when fully or partially assembled.
       mesh.rotation.x = origin.rot.x * (1 - p)
-      mesh.rotation.y = origin.rot.y * (1 - p) + autoRotY
+      mesh.rotation.y = origin.rot.y * (1 - p) + (autoRotY * p)
       mesh.rotation.z = origin.rot.z * (1 - p)
     })
 

@@ -77,20 +77,31 @@ onMounted(async () => {
         const landingPoint = heroH + (sceneH * 0.2)
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
         
-        const targetY = -window.innerHeight * 0.38
+        const targetY = -window.innerHeight * 0.34
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
         let yPos = journeyP * targetY
 
+        // ATTACHMENT: Once scrollY > landingPoint, we offset by scroll to "pin" it to the cap
+        let topFade = 1
         if (scrollY > landingPoint) {
-           yPos -= (scrollY - landingPoint)
+           const offset = (scrollY - landingPoint)
+           yPos -= offset
+           
+           // FADE OUT if it gets too high (near top/navbar)
+           // If yPos moves from -0.38vh toward -0.5vh (top), start fading
+           const topThreshold = -window.innerHeight * 0.42
+           if (yPos < topThreshold) {
+              topFade = Math.max(0, 1 - (topThreshold - yPos) / 60)
+           }
         }
 
         gsap.set(title, {
           y: yPos,
           scale: 1 - (journeyP * (1 - targetScale)),
           color: colorVal,
+          opacity: topFade,
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
         
