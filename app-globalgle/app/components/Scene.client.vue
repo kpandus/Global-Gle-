@@ -231,6 +231,8 @@ onMounted(async () => {
     const clock = new THREE.Clock()
     
     // ── SCROLL-DRIVEN REVEAL (Ease into existence) ─────────────────────
+    const rim = canvasDiv.value.querySelector('.character-rim')
+    
     const handleReveal = () => {
       const scrollY = window.scrollY
       const vh = window.innerHeight
@@ -247,8 +249,15 @@ onMounted(async () => {
       const easedP = Math.pow(p, 3)
 
       // Easing into existence: Scale and Opacity
-      const scaleVal = 0.4 + (easedP * 0.6) // Starts smaller and grows slower
+      const scaleVal = 0.4 + (easedP * 0.6) 
       character.scale.set(scaleVal, scaleVal, scaleVal)
+
+      // Rim Sync
+      if (rim) {
+        rim.style.opacity = easedP * 0.8
+        // Lowered top to reach the character head better
+        rim.style.transform = `translate(-50%, -50%) scale(${0.8 + easedP * 0.6})`
+      }
       
       character.traverse(child => {
         if (child.isMesh && child.visible) {
@@ -317,17 +326,17 @@ onUnmounted(() => {
 
 .character-rim {
   position: absolute;
-  width: 400px;
-  height: 400px;
+  width: 500px;
+  height: 500px;
   z-index: 1;
   background-color: #22d3ee;
   box-shadow: inset 66px 35px 85px 0px rgba(0, 180, 180, 0.65);
-  filter: blur(50px);
+  filter: blur(60px);
   border-radius: 50%;
-  top: 50%;
+  top: 55%;
   left: 50%;
-  transform: translate(-50%, -40%) scale(1.4);
-  opacity: 0.8;
+  transform: translate(-50%, -50%) scale(0.8);
+  opacity: 0;
   pointer-events: none;
 }
 </style>

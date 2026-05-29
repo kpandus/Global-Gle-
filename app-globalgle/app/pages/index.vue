@@ -45,11 +45,11 @@ onMounted(async () => {
 
       const globeP = Math.min(1, scrollY / (heroH * 0.8))
       if (threeEarth.value?.setScrollProgress) {
-        threeEarth.value.setScrollProgress(globeP * 0.35)
+        threeEarth.value.setScrollProgress(globeP)
       }
 
-      const appearanceStart = heroH * 0.75
-      const appearanceEnd = heroH * 0.85
+      const appearanceStart = heroH * 0.62
+      const appearanceEnd = heroH * 0.68
 
       if (scrollY < appearanceEnd) {
         gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
@@ -94,16 +94,21 @@ onMounted(async () => {
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
 
-        if (globeCanvas) {
-          const globeFadeP = Math.min(1, Math.max(0, (scrollY - heroH + 200) / 400))
-          globeCanvas.style.opacity = 1 - globeFadeP
-        }
+        // globe fade handled below
       }
 
       const exitStart = heroH + sceneH - 200
       if (scrollY > exitStart) {
         const exitP = Math.min(1, (scrollY - exitStart) / 400)
         gsap.set(title, { opacity: 1 - exitP })
+      }
+
+      // Globe always fades out once hero scroll ends
+      if (globeCanvas) {
+        const globeFadeP = Math.min(1, Math.max(0, (scrollY - heroH + 200) / 400))
+        globeCanvas.style.opacity = 1 - globeFadeP
+        // Also ensure pointer-events off once faded
+        globeCanvas.style.pointerEvents = globeFadeP >= 1 ? 'none' : 'none'
       }
     }
   })

@@ -18,8 +18,8 @@ const FRAGMENT_COUNT = 180
 
 const setScrollProgress = (value) => {
   lastScrollTime = Date.now()
-  // Remap input range (0 → 0.35) to output (0 → 1) for faster assembly
-  let remapped = value / 0.35
+  // 0.45 = globe fully assembles at 45% of the hero scroll (faster but not instant)
+  let remapped = value / 0.45
   scrollProgress = Math.max(0, Math.min(1, remapped))
 }
 
