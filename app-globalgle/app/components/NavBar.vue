@@ -218,7 +218,9 @@ const menuOpen = ref(false)
 .drawer-enter-from, .drawer-leave-to { opacity: 0; transform: translateX(-50%) translateY(-8px); }
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
+
+/* Tablet + mobile (≤900px): collapse nav links, show hamburger */
+@media (max-width: 900px) {
   #navbar {
     width: calc(100% - 2rem);
     padding: 0 0.75rem 0 0.5rem;
@@ -226,8 +228,19 @@ const menuOpen = ref(false)
   }
   .nav-center { display: none; }
   .nav-brand  { display: none; }
+  .hamburger  { display: flex; }
+}
+
+/* Mobile (≤768px): tighten sizing */
+@media (max-width: 768px) {
+  #navbar { width: calc(100% - 1.5rem); height: 50px; }
   .logo-wrap, .nav-logo { width: 36px; height: 36px; }
-  .hamburger { display: flex; }
   .nav-contact-btn { font-size: 0.72rem; padding: 0.45rem 1rem; letter-spacing: 0.08em; }
+}
+
+/* Small phones (≤480px) */
+@media (max-width: 480px) {
+  #navbar { width: calc(100% - 1rem); top: 0.75rem; }
+  .nav-contact-btn { display: none; }
 }
 </style>
