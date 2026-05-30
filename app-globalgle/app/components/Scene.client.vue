@@ -236,8 +236,8 @@ onMounted(async () => {
     const handleReveal = () => {
       const scrollY = window.scrollY
       const vh = window.innerHeight
-      const appearanceStart = vh * 4.0 * 0.4 // Start revealing much earlier
-      const landingPoint = (vh * 4.0) + (vh * 1.3 * 0.2)
+      const appearanceStart = vh * 4.0 * 0.3 // Even earlier for smoother start
+      const landingPoint = (vh * 4.0) + (vh * 2.5 * 0.2)
       
       // Calculate progress (0 to 1)
       let p = 0
@@ -245,11 +245,11 @@ onMounted(async () => {
         p = Math.min(1, (scrollY - appearanceStart) / (landingPoint - appearanceStart))
       }
 
-      // Much slower cubic easing
-      const easedP = Math.pow(p, 3)
+      // Quaratic (p^4) for ultra-slow start
+      const easedP = Math.pow(p, 4)
 
       // Easing into existence: Scale and Opacity
-      const scaleVal = 0.4 + (easedP * 0.6) 
+      const scaleVal = 0.35 + (easedP * 0.65) 
       character.scale.set(scaleVal, scaleVal, scaleVal)
 
       // Rim Sync
@@ -310,7 +310,9 @@ onUnmounted(() => {
 <style scoped>
 .character-container {
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  position: sticky;
+  top: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -326,8 +328,8 @@ onUnmounted(() => {
 
 .character-rim {
   position: absolute;
-  width: 500px;
-  height: 500px;
+  width: 400px;
+  height: 400px;
   z-index: 1;
   background-color: #22d3ee;
   box-shadow: inset 66px 35px 85px 0px rgba(0, 180, 180, 0.65);

@@ -24,7 +24,7 @@ onMounted(async () => {
 
   // ─── ANIMATION CONSTANTS ──────────────────────────────────────────────────
   const heroH = 400 * (window.innerHeight / 100)
-  const sceneH = 130 * (window.innerHeight / 100)
+  const sceneH = 250 * (window.innerHeight / 100)
 
   // ─── HERO & TRAVEL LOGIC ──────────────────────────────────────────────────
   const title = $('#hero-title')
@@ -48,8 +48,8 @@ onMounted(async () => {
         threeEarth.value.setScrollProgress(globeP)
       }
 
-      const appearanceStart = heroH * 0.15
-      const appearanceEnd = heroH * 0.22
+      const appearanceStart = heroH * 0.25
+      const appearanceEnd = heroH * 0.45
 
       if (scrollY < appearanceEnd) {
         gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
@@ -70,7 +70,7 @@ onMounted(async () => {
         const landingPoint = heroH + (sceneH * 0.2)
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
 
-        const targetY = -window.innerHeight * 0.34
+        const targetY = -window.innerHeight * 0.22
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
@@ -78,12 +78,19 @@ onMounted(async () => {
         let topFade = 1
 
         if (scrollY > landingPoint) {
-          const offset = (scrollY - landingPoint)
-          yPos -= offset
-          const topThreshold = -window.innerHeight * 0.42
-          if (yPos < topThreshold) {
-            topFade = Math.max(0, 1 - (topThreshold - yPos) / 60)
-          }
+           yPos = targetY
+
+           // UN-STICK LOGIC: If we've scrolled past the viewing duration,
+           // start moving the title with the character as it scrolls away
+           const unstickPoint = heroH + sceneH - window.innerHeight
+           if (scrollY > unstickPoint) {
+              yPos -= (scrollY - unstickPoint)
+           }
+           
+           const topThreshold = -window.innerHeight * 0.42
+           if (yPos < topThreshold) {
+              topFade = Math.max(0, 1 - (topThreshold - yPos) / 60)
+           }
         }
 
         gsap.set(title, {
@@ -97,7 +104,7 @@ onMounted(async () => {
         // globe fade handled below
       }
 
-      const exitStart = heroH + sceneH - 200
+      const exitStart = heroH + sceneH - 600
       if (scrollY > exitStart) {
         const exitP = Math.min(1, (scrollY - exitStart) / 400)
         gsap.set(title, { opacity: 1 - exitP })
@@ -541,7 +548,7 @@ html { scroll-behavior: auto; }
 
 .scene-wrapper {
   width: 100vw;
-  height: 130vh;
+  height: 250vh;
   background: #0a0d14;
   position: relative;
   z-index: 5;
