@@ -48,8 +48,8 @@ onMounted(async () => {
         threeEarth.value.setScrollProgress(globeP)
       }
 
-      const appearanceStart = heroH * 0.62
-      const appearanceEnd = heroH * 0.68
+      const appearanceStart = heroH * 0.15
+      const appearanceEnd = heroH * 0.22
 
       if (scrollY < appearanceEnd) {
         gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
