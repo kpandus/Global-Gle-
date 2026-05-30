@@ -557,7 +557,23 @@ html { scroll-behavior: auto; }
 
 /* NUMBERS */
 #numbers-section { width: 100vw; min-height: 120vh; background: #0a0d14; display: flex; align-items: center; justify-content: center; padding: 4rem; overflow: hidden; position: relative; z-index: 10; }
-.numbers-screen { position: relative; width: min(860px, 90vw); min-height: 480px; border-radius: 16px; border: 1px solid rgba(0,255,136,0.18); background: rgba(0,0,0,0.82); padding: 3.5rem 2.5rem 2.5rem; display: flex; flex-direction: column; justify-content: center; gap: 1.2rem; overflow: hidden; }
+.numbers-screen { 
+  position: relative; 
+  width: min(860px, 90vw); 
+  min-height: 480px; 
+  border-radius: 24px; 
+  border: 1px solid rgba(255, 255, 255, 0.1); 
+  background: rgba(255, 255, 255, 0.03); 
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 3.5rem 2.5rem 2.5rem; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; 
+  gap: 1.2rem; 
+  overflow: hidden; 
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
 .screen-chrome { position: absolute; top: 1.1rem; left: 1.4rem; display: flex; gap: 0.45rem; }
 .chrome-dot { width: 10px; height: 10px; border-radius: 50%; }
 .chrome-dot:nth-child(1) { background: rgba(255,80,80,0.55); border: 1px solid rgba(255,80,80,0.7); }
