@@ -74,9 +74,6 @@ const menuOpen = ref(false)
 #navbar.nav-hide {
   transform: translateX(-50%) translateY(-12px);
 }
-#navbar.scrolled {
-  background: #0a0d14;
-}
 
 /* ── Columns ──────────────────────────────────────────────────────────────── */
 .nav-left  { display: flex; align-items: center; justify-content: flex-start; }
