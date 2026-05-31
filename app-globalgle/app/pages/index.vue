@@ -122,9 +122,13 @@ onMounted(async () => {
 
     // ─── W REVEAL FOOTER ANIMATION ──────────────────────────────────────────
     const wOverlay = $('#w-overlay')
+    const wBloom = $('#w-bloom')
     const footerContent = $('#footer-content')
     const stickyWrap = $('#footer-sticky-wrap')
     
+    // Start sticky wrap at deep purple so no black ever shows
+    gsap.set(stickyWrap, { backgroundColor: '#0d0020' })
+
     ScrollTrigger.create({
       trigger: '#footer-reveal-section',
       start: 'top 93%', 
@@ -140,15 +144,28 @@ onMounted(async () => {
         let bgIntensity = 0
         let contentP = 0
 
-        // Expansion phase
-        if (p > 0.1) {
-          const expandP = (p - 0.1) / 0.9
-          wScale = 1 + (expandP * 120)
-          blurVal = expandP * 40
-          bgIntensity = Math.min(1, expandP * 1.5) 
-          
-          // Much faster content reveal
-          contentP = Math.min(1, expandP * 2) 
+        // 1. Hold phase: Let user see the W clearly for longer
+        if (p < 0.22) {
+          wScale = 1
+          blurVal = 0
+          bgIntensity = 0
+          contentP = 0
+          gsap.set(wBloom, { scale: 1, opacity: 0 })
+        } 
+        // 2. Expansion phase: Total Purple Takeover
+        else {
+          const expandP = (p - 0.22) / 0.78
+          wScale = 1 + (expandP * 130) // Massive W
+          blurVal = expandP * 50
+          bgIntensity = Math.min(1, expandP * 1.8) 
+          contentP = Math.min(1, expandP * 2.5) 
+
+          // Bloom expands exponentially to drown out any dark spots
+          const bloomP = Math.max(0, (expandP - 0.02) / 0.98)
+          gsap.set(wBloom, {
+            scale: 1 + bloomP * 130, // Universal coverage
+            opacity: Math.min(1, bloomP * 5) // Fast full fill
+          })
         }
         
         gsap.set(wOverlay, { 
@@ -157,9 +174,9 @@ onMounted(async () => {
           color: "#8b5cf6"
         })
 
-        // Background color shifts to solid purple
+        // Background shifts from dark purple → rich purple
         gsap.set(stickyWrap, {
-          backgroundColor: gsap.utils.interpolate("#000000", "#2d0a4e", bgIntensity)
+          backgroundColor: gsap.utils.interpolate("#0d0020", "#2d0a4e", bgIntensity)
         })
         
         gsap.set(footerContent, { 
@@ -169,15 +186,16 @@ onMounted(async () => {
       }
     })
 
-  // ─── 3 GLES JUMP ANIMATION (STAGGERED SEQUENCE) ─────────────────────────
+  // ─── 3 GLES JUMP & FLARE ANIMATION ──────────────────────────────────────
   const gleWordsList = gsap.utils.toArray('.gle-word')
   gleWordsList.forEach((word, i) => {
     gsap.fromTo(word, 
-      { y: 250, opacity: 0, rotationX: -60 },
+      { y: 250, opacity: 0, rotationX: -60, scale: 0.5 },
       {
         y: 0,
         opacity: 1,
         rotationX: 0,
+        scale: 0.8,
         scrollTrigger: {
           trigger: '#gle-section',
           start: `top ${90 - i * 15}%`,
@@ -219,9 +237,27 @@ onMounted(async () => {
     })
   })
 
-  // Glass Box Louvre Exit (3D Tilting and Clipping UP)
+  // Glass Box Entrance (Glide from top) & Exit (Louvre Roll-Up)
   const numbersBox = $('.numbers-screen')
   if (numbersBox) {
+    // ENTRANCE
+    gsap.fromTo(numbersBox, 
+      { y: -500, opacity: 0, skewX: 15, rotationX: 45 },
+      {
+        y: 0,
+        opacity: 1,
+        skewX: 0,
+        rotationX: 0,
+        scrollTrigger: {
+          trigger: '#numbers-section',
+          start: 'top 95%',
+          end: 'top 50%',
+          scrub: 1.5,
+        }
+      }
+    )
+
+    // EXIT
     ScrollTrigger.create({
       trigger: '#numbers-section',
       start: 'bottom 98%',
@@ -231,11 +267,12 @@ onMounted(async () => {
         const p = self.progress
         gsap.set(numbersBox, { 
           opacity: 1 - p,
-          y: -350 * p, 
-          rotationX: 30 * p, // Rotates "into" the screen
-          transformPerspective: 1000,
-          clipPath: `inset(${p * 100}% 0% 0% 0%)`, // Closes from top-down
-          filter: `blur(${p * 8}px)`
+          y: -400 * p, 
+          rotationX: 40 * p, 
+          skewY: 10 * p, // Extra motion
+          transformPerspective: 1200,
+          clipPath: `inset(${p * 100}% 0% 0% 0%)`,
+          filter: `blur(${p * 10}px) brightness(${1 + p * 1.5})`
         })
       }
     })
@@ -405,6 +442,8 @@ onUnmounted(() => {
     <!-- FOOTER REVEAL SECTION -->
     <section id="footer-reveal-section">
       <div id="footer-sticky-wrap">
+        <!-- Purple bloom behind the W to fill gaps -->
+        <div id="w-bloom"></div>
         <div id="w-overlay">W</div>
         
         <div id="footer-content">
@@ -597,7 +636,7 @@ html { scroll-behavior: auto; }
   position: relative;
   width: 100vw;
   height: 300vh;
-  background: #000;
+  background: #2d0a4e; /* Full purple — no black gaps */
 }
 
 #footer-sticky-wrap {
@@ -605,11 +644,28 @@ html { scroll-behavior: auto; }
   top: 0;
   width: 100vw;
   height: 100vh;
-  background: #000;
+  background: #0d0020;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Bloom fills the gaps the W letter strokes leave behind */
+#w-bloom {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4vw;
+  height: 4vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, #7c3aed 0%, #4c1d95 50%, #2d0a4e 100%);
+  filter: blur(60px);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 5;
+  will-change: transform, opacity;
 }
 
 #w-overlay {
