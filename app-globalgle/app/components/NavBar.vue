@@ -68,7 +68,7 @@ const menuOpen = ref(false)
   background: rgba(10, 13, 20, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  z-index: 100;
+  z-index: 99999;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;
 }
 #navbar.nav-hide {
