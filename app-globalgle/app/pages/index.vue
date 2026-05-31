@@ -583,7 +583,6 @@ html { scroll-behavior: auto; }
   height: 250vh;
   position: relative;
   z-index: 5;
-  border-top: 1px solid rgba(255,255,255,0.05);
 }
 
 /* NUMBERS */
