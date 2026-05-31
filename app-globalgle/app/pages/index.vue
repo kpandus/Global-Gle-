@@ -120,37 +120,124 @@ onMounted(async () => {
     }
   })
 
-  // ─── NUMBERS ─────────────────────────────────────────────────────────────
+    // ─── W REVEAL FOOTER ANIMATION ──────────────────────────────────────────
+    const wOverlay = $('#w-overlay')
+    const footerContent = $('#footer-content')
+    const stickyWrap = $('#footer-sticky-wrap')
+    
+    ScrollTrigger.create({
+      trigger: '#footer-reveal-section',
+      start: 'top 93%', 
+      end: 'bottom bottom',
+      scrub: 1.5,
+      onEnter: () => gsap.to(wOverlay, { opacity: 1, duration: 0.6, ease: "power2.out" }),
+      onLeaveBack: () => gsap.to(wOverlay, { opacity: 0, duration: 0.4, ease: "power2.in" }),
+      onUpdate: (self) => {
+        const p = self.progress
+        
+        let wScale = 1
+        let blurVal = 0
+        let bgIntensity = 0
+        let contentP = 0
+
+        // Expansion phase
+        if (p > 0.2) {
+          const expandP = (p - 0.2) / 0.8
+          wScale = 1 + (expandP * 120)
+          blurVal = expandP * 40
+          bgIntensity = Math.min(1, expandP * 1.5) 
+          contentP = expandP
+        }
+        
+        gsap.set(wOverlay, { 
+          scale: wScale, 
+          filter: `blur(${blurVal}px)`,
+          color: "#8b5cf6"
+        })
+
+        // Background color shifts to solid purple
+        gsap.set(stickyWrap, {
+          backgroundColor: gsap.utils.interpolate("#000000", "#2d0a4e", bgIntensity)
+        })
+        
+        gsap.set(footerContent, { 
+          opacity: contentP,
+          y: -15 * (1 - contentP)
+        })
+      }
+    })
+
+  // ─── 3 GLES JUMP ANIMATION (STAGGERED SEQUENCE) ─────────────────────────
+  const gleWordsList = gsap.utils.toArray('.gle-word')
+  gleWordsList.forEach((word, i) => {
+    gsap.fromTo(word, 
+      { y: 150, opacity: 0, rotationX: -60 },
+      {
+        y: 0,
+        opacity: 1,
+        rotationX: 0,
+        scrollTrigger: {
+          trigger: '#gle-section',
+          // Each word triggers about 15% after the previous one
+          start: `top ${85 - i * 15}%`,
+          end: `top ${40 - i * 15}%`,
+          scrub: 1.2,
+        },
+        ease: "back.out(1.7)"
+      }
+    )
+  })
+
+  // ─── NUMBERS (CONTINUOUS MATRIX FALL) ────────────────────────────────────
   const numberItems = gsap.utils.toArray('.number-item')
   numberItems.forEach((el, i) => {
+    const duration = 4 + Math.random() * 4
+    const delay = Math.random() * 5
+    const anim = gsap.fromTo(el, 
+      { y: -300, opacity: 0 },
+      {
+        y: 300,
+        opacity: 1,
+        duration: duration,
+        repeat: -1,
+        delay: delay,
+        ease: "none",
+        onRepeat: () => { gsap.set(el, { opacity: 0 }) }
+      }
+    )
+    cleanupFns.push(() => anim.kill())
+
     ScrollTrigger.create({
       trigger: '#numbers-section',
-      start: 'top 80%',
-      end: 'bottom 20%',
-      scrub: 1.5,
-      onUpdate(self) {
-        const p = self.progress
-        const stagger = 0.07
-        const duration = 0.28
-        const itemStart = i * stagger
-        const itemPeak  = itemStart + duration
-        const itemEnd   = itemPeak + duration
-        let local = 0
-        if (p < itemStart) {
-          local = 0
-        } else if (p < itemPeak) {
-          local = (p - itemStart) / duration
-        } else if (p < itemEnd) {
-          local = 1 - (p - itemPeak) / duration
-        }
-        if (p < itemPeak) {
-          gsap.set(el, { opacity: local, x: (1 - local) * 200, y: (1 - local) * 200 })
-        } else {
-          gsap.set(el, { opacity: local, x: -(1 - local) * 200, y: -(1 - local) * 200 })
-        }
-      },
+      start: 'top bottom',
+      end: 'bottom top',
+      onToggle: (self) => {
+        if (!self.isActive) gsap.set(el, { visibility: 'hidden' })
+        else gsap.set(el, { visibility: 'visible' })
+      }
     })
   })
+
+  // Glass Box Louvre Exit (Sliding Up and Clipping)
+  const numbersBox = $('.numbers-screen')
+  if (numbersBox) {
+    ScrollTrigger.create({
+      trigger: '#numbers-section',
+      start: 'bottom 95%',
+      end: 'bottom top',
+      scrub: 1.2,
+      onUpdate(self) {
+        const p = self.progress
+        gsap.set(numbersBox, { 
+          opacity: 1 - p,
+          y: -250 * p, // Significant upward slide
+          clipPath: `inset(0% 0% ${p * 100}% 0%)`, // The 'Louvre' closing effect
+          scale: 1 - p * 0.05,
+          filter: `blur(${p * 10}px)`
+        })
+      }
+    })
+  }
 
   gsap.utils.toArray('.number-layer').forEach((el, i) => {
     ScrollTrigger.create({
@@ -200,135 +287,8 @@ onMounted(async () => {
     cleanupFns.push(() => btn.removeEventListener('click', handler))
   })
 
-  // ─── GLE SECTION ─────────────────────────────────────────────────────────
-  const gleWords = $$('.gle-word')
-  gleWords.forEach((el, i) => {
-    ScrollTrigger.create({
-      trigger: '#gle-section',
-      start: `top ${85 - i * 10}%`,
-      end: `top ${55 - i * 10}%`,
-      scrub: 1,
-      onUpdate(self) { gsap.set(el, { opacity: self.progress, y: (1 - self.progress) * 60 }) },
-      onLeave() {
-        const t = gsap.to(el, {
-          y: -28,
-          duration: 0.6 + i * 0.08,
-          ease: 'sine.inOut',
-          yoyo: true,
-          repeat: -1,
-          delay: i * 0.22,
-        })
-        cleanupFns.push(() => t.kill())
-      }
-    })
-  })
+  // (Deduplicated GLE Section logic moved above)
 
-  // ─── FOOTER W REVEAL ─────────────────────────────────────────────────────
-  const footer = $('#footer')
-  const footerSpacer = $('#footer-spacer')
-  const wOverlay = $('#w-overlay')
-
-  if (footer && footerSpacer && wOverlay) {
-
-    // initial hidden states
-    gsap.set(wOverlay, { scaleX: 0.05, scaleY: 3, opacity: 0 })
-    gsap.set(footerSpacer, { clipPath: 'inset(0 50% 0 50%)' })
-    gsap.set(footer, { opacity: 0, y: 30 })
-
-    // track scroll direction
-    let lastP = 0
-
-    ScrollTrigger.create({
-      trigger: '#footer-spacer',
-      start: 'top 90%',
-      end: 'top 10%',
-      scrub: 1.2,
-      onUpdate(self) {
-        const p = self.progress
-        const goingDown = p >= lastP
-        lastP = p
-
-        // ── FOOTER FULLY OPEN: W is ALWAYS invisible here ──
-        if (p >= 0.65) {
-          gsap.set(wOverlay, { opacity: 0 })
-          const contentP = (p - 0.65) / 0.35
-          gsap.set(footer, { opacity: contentP, y: (1 - contentP) * 30 })
-          gsap.set(footerSpacer, { clipPath: 'inset(0 0% 0 0%)' })
-          return
-        }
-
-        // ── SCROLL DOWN: W explodes open ──
-        if (goingDown) {
-          let wOpacity, wScaleX, wScaleY
-
-          if (p <= 0.45) {
-            const a = p / 0.45
-            wOpacity = Math.min(1, a * 2)
-            wScaleX  = 0.05 + a * 7.95
-            wScaleY  = 3 - a * 2.2
-          } else {
-            // p is 0.45–0.65: W holds open, starts to fade
-            const c = (p - 0.45) / 0.2
-            wOpacity = 1 - c
-            wScaleX  = 8
-            wScaleY  = 0.8
-          }
-
-          const strokeAlpha = Math.min(1, p / 0.45)
-          gsap.set(wOverlay, {
-            scaleX: wScaleX,
-            scaleY: wScaleY,
-            opacity: wOpacity,
-            color: 'transparent',
-            webkitTextStroke: `2px rgba(0,255,136,${strokeAlpha})`,
-            textShadow: `0 0 60px rgba(0,255,136,${strokeAlpha * 0.4})`,
-          })
-
-          const clipP = Math.max(0, Math.min(1, (p - 0.05) / 0.6))
-          gsap.set(footerSpacer, { clipPath: `inset(0 ${50 - clipP * 50}% 0 ${50 - clipP * 50}%)` })
-          gsap.set(footer, { opacity: 0, y: 30 })
-
-        } else {
-          // ── SCROLL UP: TV turn-off collapse ──
-          const closeP = p / 0.45  // 0 → 1
-
-          // line appears wide then collapses to dot
-          const wScaleX = closeP < 0.5
-            ? (closeP / 0.5) * 8
-            : (1 - (closeP - 0.5) / 0.5) * 8
-          const wScaleY  = closeP * 0.12  // ultra thin TV line
-          const wOpacity = closeP < 0.04
-            ? closeP / 0.04
-            : closeP > 0.92
-              ? 1 - ((closeP - 0.92) / 0.08)
-              : 1
-
-          gsap.set(wOverlay, {
-            scaleX: wScaleX,
-            scaleY: wScaleY,
-            opacity: wOpacity,
-            color: 'transparent',
-            webkitTextStroke: `2px rgba(0,255,136,1)`,
-            textShadow: `0 0 30px rgba(0,255,136,0.6)`,
-          })
-
-          const inset = Math.max(0, 50 - closeP * 50)
-          gsap.set(footerSpacer, { clipPath: `inset(0 ${inset}% 0 ${inset}%)` })
-          gsap.set(footer, { opacity: 0, y: 30 })
-        }
-      },
-      onLeave() {
-        // scrolled past footer bottom — ensure W is gone
-        gsap.set(wOverlay, { opacity: 0 })
-      },
-      onLeaveBack() {
-        // scrolled back above footer zone — ensure W is gone
-        gsap.set(wOverlay, { opacity: 0 })
-        gsap.set(footerSpacer, { clipPath: 'inset(0 50% 0 50%)' })
-        gsap.set(footer, { opacity: 0, y: 30 })
-      }
-    })
-  }
 
 }) // ← onMounted closes here ✅
 
@@ -438,48 +398,79 @@ onUnmounted(() => {
         <span class="gle-word">GLE</span>
         <span class="gle-word">GLE</span>
       </div>
-      <div id="w-overlay">W</div>
     </section>
 
-    <div id="footer-spacer">
-      <footer id="footer">
+    <!-- FOOTER REVEAL SECTION -->
+    <section id="footer-reveal-section">
+      <div id="footer-sticky-wrap">
+        <div id="w-overlay">W</div>
+        
+        <div id="footer-content">
+          <footer id="footer">
+            <div class="footer-top">
+              <div class="footer-brand">
+                <div class="footer-logo">GlobalGle</div>
+                <p class="footer-desc">
+                  Building the infrastructure for 
+                  the global economy's next act.
+                </p>
+                <div class="footer-socials">
+                  <span class="social-cir">X</span>
+                  <span class="social-cir">LN</span>
+                  <span class="social-cir">IG</span>
+                  <span class="social-cir">YT</span>
+                </div>
+              </div>
+              
+              <div class="footer-nav">
+                <div class="nav-group">
+                  <span class="nav-label">Protocol</span>
+                  <a href="#">Network</a>
+                  <a href="#">Liquidity</a>
+                  <a href="#">Security</a>
+                  <a href="#">Open API</a>
+                </div>
+                <div class="nav-group">
+                  <span class="nav-label">Resources</span>
+                  <a href="#">Whitepaper</a>
+                  <a href="#">Documentation</a>
+                  <a href="#">Community</a>
+                  <a href="#">Guides</a>
+                </div>
+                <div class="nav-group">
+                  <span class="nav-label">Company</span>
+                  <a href="#">About Us</a>
+                  <a href="#">Careers</a>
+                  <a href="#">Press Kit</a>
+                  <a href="#">Contact</a>
+                </div>
+              </div>
 
-        <div class="footer-col1">
-          <div class="footer-logo">GlobalGle</div>
-          <p class="footer-tagline">Powering cross-border payments<br/>for the world's boldest businesses.</p>
-          <p class="footer-copy">© 2025 GlobalGle. All rights reserved.</p>
-        </div>
-
-        <div class="footer-col2">
-          <p class="footer-col-label">Navigation</p>
-          <nav>
-            <a href="#">Work</a>
-            <a href="#">About</a>
-            <a href="#">Services</a>
-            <a href="#">Portfolio</a>
-            <a href="#">Contact</a>
-          </nav>
-        </div>
-
-        <div class="footer-col3">
-          <p class="footer-col-label">Social</p>
-          <div class="social-icons">
-            <div class="social-icon">
-              <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+              <div class="footer-newsletter">
+                <span class="nav-label">Stay Connected</span>
+                <p>Join 2,000+ institutions scaling with GlobalGle.</p>
+                <div class="news-input-wrap">
+                  <input type="text" placeholder="Email address" />
+                  <button>→</button>
+                </div>
+              </div>
             </div>
-            <div class="social-icon">
-              <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            
+            <div class="footer-legal">
+              <div class="legal-left">
+                <span>© 2025 GlobalGle Inc.</span>
+                <a href="#">Privacy</a>
+                <a href="#">Terms</a>
+                <a href="#">Sitemap</a>
+              </div>
+              <div class="legal-right">
+                <span class="status-pulse"></span> Network Active
+              </div>
             </div>
-          </div>
+          </footer>
         </div>
-
-        <div class="footer-bottom-links">
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-        </div>
-
-      </footer>
-    </div>
+      </div>
+    </section>
   </main>
 </template>
 
@@ -600,80 +591,169 @@ html { scroll-behavior: auto; }
 .gle-text-wrap { display: flex; gap: clamp(1rem, 4vw, 4rem); }
 .gle-word { font-family: 'Urbanist', sans-serif; font-size: clamp(4rem, 12vw, 11rem); font-weight: 800; color: transparent; -webkit-text-stroke: 1.5px rgba(255,255,255,0.18); }
 
-/* W OVERLAY */
-#w-overlay {
-  position: fixed;
+#footer-reveal-section {
+  position: relative;
+  width: 100vw;
+  height: 300vh;
+  background: #000;
+}
+
+#footer-sticky-wrap {
+  position: sticky;
   top: 0;
-  left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 29;
+  background: #000;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+#w-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
   font-family: 'Urbanist', sans-serif;
-  font-size: 40vw;
+  font-size: 25vw;
   font-weight: 900;
-  color: transparent;
-  -webkit-text-stroke: 2px rgba(0, 255, 136, 0.8);
+  color: #8b5cf6;
   pointer-events: none;
   opacity: 0;
-  letter-spacing: -0.05em;
-  line-height: 1;
-  background: transparent;
   will-change: transform, opacity;
 }
 
-/* FOOTER */
-#footer-spacer {
-  width: 100vw;
-  position: relative;
-  z-index: 30;
-  background: #0a0d14;
-  overflow: hidden;
-  clip-path: inset(0 50% 0 50%);
+#footer-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  z-index: 200;
+  padding: 4rem 6vw;
 }
 
 #footer {
-  background: #0a0d14;
   width: 100%;
-  min-height: 60vh;
-  padding: 5rem 6vw 4rem;
-  display: grid;
-  grid-template-columns: 1.6fr 0.7fr 0.7fr;
-  gap: 4rem;
-  opacity: 0;
-  transform: translateY(40px);
+  max-width: 1300px;
+  color: #fff;
 }
+
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 4rem;
+  padding-bottom: 5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.footer-brand { flex: 1; min-width: 280px; }
 
 .footer-logo {
-  font-family: 'Urbanist', sans-serif;
-  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-size: 2.4rem;
   font-weight: 800;
-  color: #fff;
-  letter-spacing: 0.02em;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
+  letter-spacing: -0.02em;
 }
 
-.footer-tagline {
-  font-size: 0.95rem;
-  color: rgba(255,255,255,0.45);
-  line-height: 1.7;
-  max-width: 320px;
-  margin-bottom: 2.5rem;
+.footer-desc {
+  color: rgba(255,255,255,0.5);
+  line-height: 1.6;
+  font-size: 1.05rem;
+  margin-bottom: 2.2rem;
+  max-width: 240px;
 }
 
-.footer-copy {
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.25);
+.footer-socials { display: flex; gap: 0.8rem; }
+.social-cir {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
 }
+.social-cir:hover { border-color: #8b5cf6; color: #8b5cf6; }
 
-.footer-col-label {
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
+.footer-nav { flex: 2; display: flex; justify-content: space-around; gap: 2rem; }
+
+.nav-group { display: flex; flex-direction: column; gap: 1rem; }
+.nav-label {
+  font-size: 0.85rem;
+  font-weight: 800;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.35);
-  margin-bottom: 1.25rem;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 0.5rem;
+}
+.nav-group a {
+  color: rgba(255,255,255,0.45);
+  text-decoration: none;
+  font-size: 1rem;
+  transition: 0.2s;
+}
+.nav-group a:hover { color: #fff; }
+
+.footer-newsletter { flex: 1; max-width: 300px; }
+.footer-newsletter p { font-size: 0.95rem; color: rgba(255,255,255,0.5); margin-bottom: 1.5rem; line-height: 1.5; }
+
+.news-input-wrap {
+  display: flex;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 0.4rem;
+  border-radius: 8px;
+}
+.news-input-wrap input {
+  background: transparent;
+  border: none;
+  width: 100%;
+  padding: 0.6rem;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.news-input-wrap input:focus { outline: none; }
+.news-input-wrap button {
+  background: #fff;
+  border: none;
+  border-radius: 6px;
+  width: 38px;
+  height: 34px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.news-input-wrap button:hover { background: #8b5cf6; color: #fff; }
+
+.footer-legal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 2.5rem;
+}
+.legal-left { display: flex; gap: 2rem; align-items: center; font-size: 0.85rem; color: rgba(255,255,255,0.3); }
+.legal-left a { color: inherit; text-decoration: none; transition: 0.2s; }
+.legal-left a:hover { color: rgba(255,255,255,0.6); }
+
+.legal-right { font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.4); display: flex; align-items: center; gap: 0.5rem; }
+.status-pulse {
+  width: 8px;
+  height: 8px;
+  background: #00ff88;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #00ff88;
 }
 
 .footer-col2 nav {

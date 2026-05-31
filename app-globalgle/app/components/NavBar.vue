@@ -64,8 +64,10 @@ const menuOpen = ref(false)
   align-items: center;
   padding: 0 1rem 0 0.6rem;
   border-radius: 100px;
-  border: none;
-  background: #0a0d14;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 13, 20, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 100;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;
 }

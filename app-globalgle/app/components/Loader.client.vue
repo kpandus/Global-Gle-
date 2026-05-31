@@ -145,7 +145,7 @@ watch(() => props.percent, (newVal) => {
   position: absolute;
   overflow: hidden;
   left: 0;
-  animation: loaderGame 7s linear infinite;
+  animation: loaderGame 12s linear infinite;
 }
 
 @keyframes loaderGame {
@@ -177,7 +177,7 @@ watch(() => props.percent, (newVal) => {
   height: 15px;
   border-radius: 50%;
   background-color: #00ff88;
-  animation: ball25 7s infinite;
+  animation: ball25 12s infinite;
   transform: translateY(10px);
   animation-timing-function: cubic-bezier(0.3, 1.18, 0.63, 1.28);
 }
@@ -204,7 +204,7 @@ watch(() => props.percent, (newVal) => {
 .marquee-content {
   display: inline-block;
   padding-left: 100%;
-  animation: marquee 20s linear infinite;
+  animation: marquee 35s linear infinite;
 }
 
 .marquee-content span {
