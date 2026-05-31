@@ -331,8 +331,8 @@ onUnmounted(() => {
 
 .character-rim {
   position: absolute;
-  width: 400px;
-  height: 400px;
+  width: 252px;
+  height: 252px;
   z-index: 1;
   background-color: #22d3ee;
   box-shadow: inset 66px 35px 85px 0px rgba(0, 180, 180, 0.65);
