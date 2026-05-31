@@ -141,12 +141,14 @@ onMounted(async () => {
         let contentP = 0
 
         // Expansion phase
-        if (p > 0.2) {
-          const expandP = (p - 0.2) / 0.8
+        if (p > 0.1) {
+          const expandP = (p - 0.1) / 0.9
           wScale = 1 + (expandP * 120)
           blurVal = expandP * 40
           bgIntensity = Math.min(1, expandP * 1.5) 
-          contentP = expandP
+          
+          // Much faster content reveal
+          contentP = Math.min(1, expandP * 2) 
         }
         
         gsap.set(wOverlay, { 
@@ -171,19 +173,18 @@ onMounted(async () => {
   const gleWordsList = gsap.utils.toArray('.gle-word')
   gleWordsList.forEach((word, i) => {
     gsap.fromTo(word, 
-      { y: 150, opacity: 0, rotationX: -60 },
+      { y: 250, opacity: 0, rotationX: -60 },
       {
         y: 0,
         opacity: 1,
         rotationX: 0,
         scrollTrigger: {
           trigger: '#gle-section',
-          // Each word triggers about 15% after the previous one
-          start: `top ${85 - i * 15}%`,
-          end: `top ${40 - i * 15}%`,
-          scrub: 1.2,
+          start: `top ${90 - i * 15}%`,
+          end: `bottom ${10 - i * 15}%`, 
+          scrub: 2.2, 
         },
-        ease: "back.out(1.7)"
+        ease: "power2.out"
       }
     )
   })
@@ -218,22 +219,23 @@ onMounted(async () => {
     })
   })
 
-  // Glass Box Louvre Exit (Sliding Up and Clipping)
+  // Glass Box Louvre Exit (3D Tilting and Clipping UP)
   const numbersBox = $('.numbers-screen')
   if (numbersBox) {
     ScrollTrigger.create({
       trigger: '#numbers-section',
-      start: 'bottom 95%',
+      start: 'bottom 98%',
       end: 'bottom top',
       scrub: 1.2,
       onUpdate(self) {
         const p = self.progress
         gsap.set(numbersBox, { 
           opacity: 1 - p,
-          y: -250 * p, // Significant upward slide
-          clipPath: `inset(0% 0% ${p * 100}% 0%)`, // The 'Louvre' closing effect
-          scale: 1 - p * 0.05,
-          filter: `blur(${p * 10}px)`
+          y: -350 * p, 
+          rotationX: 30 * p, // Rotates "into" the screen
+          transformPerspective: 1000,
+          clipPath: `inset(${p * 100}% 0% 0% 0%)`, // Closes from top-down
+          filter: `blur(${p * 8}px)`
         })
       }
     })

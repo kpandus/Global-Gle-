@@ -236,37 +236,40 @@ onMounted(async () => {
     const handleReveal = () => {
       const scrollY = window.scrollY
       const vh = window.innerHeight
-      const appearanceStart = vh * 4.0 * 0.3 // Even earlier for smoother start
-      const landingPoint = (vh * 4.0) + (vh * 2.5 * 0.2)
+      const heroH = vh * 4.0
+      const sceneH = vh * 2.5
       
-      // Calculate progress (0 to 1)
+      const appearanceStart = heroH * 0.15 
+      const landingPoint = heroH + (sceneH * 0.2)
+      
       let p = 0
-      if (scrollY > appearanceStart) {
-        p = Math.min(1, (scrollY - appearanceStart) / (landingPoint - appearanceStart))
+      if (scrollY < appearanceStart) {
+        p = 0
+      } else if (scrollY > landingPoint) {
+        p = 1
+      } else {
+        p = (scrollY - appearanceStart) / (landingPoint - appearanceStart)
       }
 
-      // Quaratic (p^4) for ultra-slow start
-      const easedP = Math.pow(p, 4)
+      const easedP = Math.pow(p, 3)
+      const scaleVal = 0.4 + (easedP * 0.6) 
 
-      // Easing into existence: Scale and Opacity
-      const scaleVal = 0.35 + (easedP * 0.65) 
-      character.scale.set(scaleVal, scaleVal, scaleVal)
+      if (character) {
+        character.scale.set(scaleVal, scaleVal, scaleVal)
+        character.traverse(child => {
+          if (child.isMesh && child.visible) {
+            if (child.material) {
+              child.material.transparent = true
+              child.material.opacity = easedP
+            }
+          }
+        })
+      }
 
-      // Rim Sync
       if (rim) {
         rim.style.opacity = easedP * 0.8
-        // Lowered top to reach the character head better
         rim.style.transform = `translate(-50%, -50%) scale(${0.8 + easedP * 0.6})`
       }
-      
-      character.traverse(child => {
-        if (child.isMesh && child.visible) {
-          if (child.material) {
-            child.material.transparent = true
-            child.material.opacity = easedP
-          }
-        }
-      })
     }
     
     window.addEventListener('scroll', handleReveal, { passive: true })
