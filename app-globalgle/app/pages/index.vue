@@ -581,7 +581,6 @@ html { scroll-behavior: auto; }
 .scene-wrapper {
   width: 100vw;
   height: 250vh;
-  background: #0a0d14;
   position: relative;
   z-index: 5;
   border-top: 1px solid rgba(255,255,255,0.05);
