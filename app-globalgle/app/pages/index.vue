@@ -541,7 +541,7 @@ html { scroll-behavior: auto; }
 
 #hero-title {
   font-family: 'Urbanist', sans-serif;
-  font-size: clamp(3rem, 10vw, 9rem);
+  font-size: clamp(2rem, 7vw, 9rem);
   font-weight: 800;
   letter-spacing: 0.1em;
   color: #fff;
