@@ -22,9 +22,9 @@ onMounted(async () => {
   window.addEventListener('scroll', onScroll, { passive: true })
   cleanupFns.push(() => window.removeEventListener('scroll', onScroll))
 
-  // ─── ANIMATION CONSTANTS ──────────────────────────────────────────────────
-  const heroH = 400 * (window.innerHeight / 100)
-  const sceneH = 250 * (window.innerHeight / 100)
+  // ─── ANIMATION CONSTANTS (Reactive for orientation changes) ───────────────
+  const getHeroH = () => 400 * (window.innerHeight / 100)
+  const getSceneH = () => 250 * (window.innerHeight / 100)
 
   // ─── HERO & TRAVEL LOGIC ──────────────────────────────────────────────────
   const title = $('#hero-title')
@@ -37,19 +37,26 @@ onMounted(async () => {
   ScrollTrigger.create({
     trigger: '#hero',
     start: 'top top',
-    end: `bottom+=${sceneH} top`,
+    end: () => `bottom+=${getSceneH()} top`,
     scrub: 1,
     onUpdate: (self) => {
       const scrollY = window.scrollY
-      const isMobile = window.innerWidth < 768
+      
+      const isAndroid = /Android/i.test(navigator.userAgent)
+      const isLargeScreen = window.matchMedia("(min-width: 1025px)").matches
+      const isDesktopView = isLargeScreen || isAndroid
+      const isMobile = !isDesktopView
 
-      const globeP = Math.min(1, scrollY / (heroH * 0.8))
+      const hh = getHeroH()
+      const sh = getSceneH()
+
+      const globeP = Math.min(1, scrollY / (hh * 0.8))
       if (threeEarth.value?.setScrollProgress) {
         threeEarth.value.setScrollProgress(globeP)
       }
 
-      const appearanceStart = heroH * 0.25
-      const appearanceEnd = heroH * 0.45
+      const appearanceStart = hh * 0.25
+      const appearanceEnd = hh * 0.45
 
       if (scrollY < appearanceEnd) {
         gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
@@ -67,10 +74,11 @@ onMounted(async () => {
       }
 
       if (scrollY > appearanceEnd) {
-        const landingPoint = heroH + (sceneH * 0.2)
+        const landingPoint = hh + (sh * 0.2)
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
 
-        const targetY = -window.innerHeight * 0.22
+        // Adjusted targetY for Desktop/Android vs Mobile
+        const targetY = isMobile ? -window.innerHeight * 0.22 : -window.innerHeight * 0.38
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
@@ -82,12 +90,12 @@ onMounted(async () => {
 
            // UN-STICK LOGIC: If we've scrolled past the viewing duration,
            // start moving the title with the character as it scrolls away
-           const unstickPoint = heroH + sceneH - window.innerHeight
+           const unstickPoint = hh + sh - window.innerHeight
            if (scrollY > unstickPoint) {
               yPos -= (scrollY - unstickPoint)
            }
            
-           const topThreshold = -window.innerHeight * 0.42
+           const topThreshold = -window.innerHeight * 0.48
            if (yPos < topThreshold) {
               topFade = Math.max(0, 1 - (topThreshold - yPos) / 60)
            }
@@ -101,110 +109,112 @@ onMounted(async () => {
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
 
-        // globe fade handled below
       }
 
-      const exitStart = heroH + sceneH - 600
+      const exitStart = hh + sh - 600
       if (scrollY > exitStart) {
         const exitP = Math.min(1, (scrollY - exitStart) / 400)
         gsap.set(title, { opacity: 1 - exitP })
       }
 
-      // Globe always fades out once hero scroll ends
       if (globeCanvas) {
-        const globeFadeP = Math.min(1, Math.max(0, (scrollY - heroH + 200) / 400))
+        const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh + 200) / 400))
         globeCanvas.style.opacity = 1 - globeFadeP
-        // Also ensure pointer-events off once faded
         globeCanvas.style.pointerEvents = globeFadeP >= 1 ? 'none' : 'none'
       }
     }
   })
 
     // ─── W REVEAL FOOTER ANIMATION ──────────────────────────────────────────
-    const wOverlay = $('#w-overlay')
-    const wBloom = $('#w-bloom')
-    const footerContent = $('#footer-content')
-    const stickyWrap = $('#footer-sticky-wrap')
-    
-    // Start sticky wrap at deep purple so no black ever shows
-    gsap.set(stickyWrap, { backgroundColor: '#0d0020' })
+  // ─── UNIFIED PUNCHY SEQUENCE (GLE -> W -> REVEAL) ───────────────────────
+  const footerSec = $('#footer-reveal-section')
+  const gleWords = gsap.utils.toArray('.gle-word')
+  const gleMid = $('#gle-mid')
+  const sideGles = gsap.utils.toArray('.side-gle')
+  const wOverlay = $('#w-overlay')
+  const wBloom = $('#w-bloom')
+  const stickyWrap = $('#footer-sticky-wrap')
+  const footerContent = $('#footer-content')
 
-    ScrollTrigger.create({
-      trigger: '#footer-reveal-section',
-      start: 'top 93%', 
-      end: 'bottom bottom',
-      scrub: 1.5,
-      onEnter: () => gsap.to(wOverlay, { opacity: 1, duration: 0.6, ease: "power2.out" }),
-      onLeaveBack: () => gsap.to(wOverlay, { opacity: 0, duration: 0.4, ease: "power2.in" }),
-      onUpdate: (self) => {
-        const p = self.progress
-        
-        let wScale = 1
-        let blurVal = 0
-        let bgIntensity = 0
-        let contentP = 0
-
-        // 1. Hold phase: Let user see the W clearly for longer
-        if (p < 0.22) {
-          wScale = 1
-          blurVal = 0
-          bgIntensity = 0
-          contentP = 0
-          gsap.set(wBloom, { scale: 1, opacity: 0 })
-        } 
-        // 2. Expansion phase: Total Purple Takeover
-        else {
-          const expandP = (p - 0.22) / 0.78
-          wScale = 1 + (expandP * 130) // Massive W
-          blurVal = expandP * 50
-          bgIntensity = Math.min(1, expandP * 1.8) 
-          contentP = Math.min(1, expandP * 2.5) 
-
-          // Bloom expands exponentially to drown out any dark spots
-          const bloomP = Math.max(0, (expandP - 0.02) / 0.98)
-          gsap.set(wBloom, {
-            scale: 1 + bloomP * 130, // Universal coverage
-            opacity: Math.min(1, bloomP * 5) // Fast full fill
+  ScrollTrigger.create({
+    trigger: footerSec,
+    start: 'top top',
+    end: 'bottom bottom',
+    scrub: 1.2,
+    onUpdate(self) {
+      const p = self.progress
+      
+      // PHASE 1: GLE Wave Jump (0.0 -> 0.2)
+      if (p < 0.2) {
+        const jumpP = p / 0.2
+        gleWords.forEach((word, i) => {
+          const stagger = i * 0.1
+          const wp = Math.max(0, Math.min(1, (jumpP - stagger) * 2))
+          gsap.set(word, {
+            y: -(Math.sin(wp * Math.PI) * 40), 
+            opacity: 1, // ALWAYS VISIBLE IMMEDIATELY
+            scale: 0.9 + wp * 0.1
           })
-        }
+        })
+        gsap.set(sideGles, { opacity: 1 })
+        gsap.set(gleMid, { textContent: 'GLE', color: 'transparent', webkitTextStroke: '1.5px rgba(255,255,255,0.18)' })
+        gsap.set(wOverlay, { opacity: 0 })
+        gsap.set(footerContent, { opacity: 0 })
+      }
+
+      // PHASE 2: Focus & Morph (0.2 -> 0.35)
+      if (p >= 0.2 && p < 0.35) {
+        const morphP = (p - 0.2) / 0.15
+        gsap.set(sideGles, { opacity: 1 - morphP }) 
         
+        gleMid.textContent = 'W'
+        gsap.set(gleMid, {
+          y: 0,
+          color: 'transparent',
+          webkitTextStroke: '1.5px rgba(255,255,255,0.18)',
+          scale: 1 + morphP * 0.4,
+          opacity: 1
+        })
+        gsap.set(wOverlay, { opacity: 0 })
+      }
+
+      // PHASE 3: Reveal Expansion (0.35 -> 0.85)
+      if (p >= 0.35) {
+        const expandP = Math.min(1, (p - 0.35) / 0.5)
+        gsap.set(sideGles, { opacity: 0 })
+        gsap.set(gleMid, { opacity: 0 }) 
+        
+        const wScale = 1 + (expandP * 140)
+        const blurVal = expandP * 40
+
         gsap.set(wOverlay, { 
-          scale: wScale, 
+          opacity: 1, 
+          scale: Math.max(1, wScale * 0.7), 
           filter: `blur(${blurVal}px)`,
-          color: "#8b5cf6"
+          webkitTextStroke: '1.5px rgba(255,255,255,0.18)'
         })
 
-        // Background shifts from dark purple → rich purple
-        gsap.set(stickyWrap, {
-          backgroundColor: gsap.utils.interpolate("#0d0020", "#2d0a4e", bgIntensity)
+        const bloomP = Math.max(0, (expandP - 0.02) / 0.98)
+        gsap.set(wBloom, {
+          scale: 1 + bloomP * 140,
+          opacity: Math.min(1, bloomP * 5),
+          background: 'rgba(255,255,255,0.02)'
         })
-        
+
         gsap.set(footerContent, { 
-          opacity: contentP,
-          y: -15 * (1 - contentP)
+          opacity: Math.min(1, expandP * 10), 
+          y: -10 * (1 - Math.min(1, expandP * 10))
         })
       }
-    })
 
-  // ─── 3 GLES JUMP & FLARE ANIMATION ──────────────────────────────────────
-  const gleWordsList = gsap.utils.toArray('.gle-word')
-  gleWordsList.forEach((word, i) => {
-    gsap.fromTo(word, 
-      { y: 250, opacity: 0, rotationX: -60, scale: 0.5 },
-      {
-        y: 0,
-        opacity: 1,
-        rotationX: 0,
-        scale: 0.8,
-        scrollTrigger: {
-          trigger: '#gle-section',
-          start: `top ${90 - i * 15}%`,
-          end: `bottom ${10 - i * 15}%`, 
-          scrub: 2.2, 
-        },
-        ease: "power2.out"
-      }
-    )
+      // ─── FORCE BLACK BACKGROUND (NO PURPLE) ───
+      gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
+    },
+    onToggle: (self) => {
+      if (!self.isActive) gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
+    },
+    onLeave: () => gsap.set(stickyWrap, { backgroundColor: '#0a0d14' }),
+    onLeaveBack: () => gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
   })
 
   // ─── NUMBERS (CONTINUOUS MATRIX FALL) ────────────────────────────────────
@@ -212,32 +222,20 @@ onMounted(async () => {
   numberItems.forEach((el, i) => {
     const duration = 4 + Math.random() * 4
     const delay = Math.random() * 5
-    const anim = gsap.fromTo(el, 
-      { y: -300, opacity: 0 },
+    gsap.fromTo(el, 
+      { y: -20, opacity: 0 },
       {
-        y: 300,
-        opacity: 1,
+        y: 120,
+        opacity: Math.random() * 0.8 + 0.2,
         duration: duration,
         repeat: -1,
         delay: delay,
-        ease: "none",
-        onRepeat: () => { gsap.set(el, { opacity: 0 }) }
+        ease: "none"
       }
     )
-    cleanupFns.push(() => anim.kill())
-
-    ScrollTrigger.create({
-      trigger: '#numbers-section',
-      start: 'top bottom',
-      end: 'bottom top',
-      onToggle: (self) => {
-        if (!self.isActive) gsap.set(el, { visibility: 'hidden' })
-        else gsap.set(el, { visibility: 'visible' })
-      }
-    })
   })
 
-  // Glass Box Entrance (Glide from top) & Exit (Louvre Roll-Up)
+  // Numbers Screen Entrance (The Louvre Glide)
   const numbersBox = $('.numbers-screen')
   if (numbersBox) {
     // ENTRANCE
@@ -252,12 +250,12 @@ onMounted(async () => {
           trigger: '#numbers-section',
           start: 'top 95%',
           end: 'top 50%',
-          scrub: 1.5,
+          scrub: 1.5
         }
       }
     )
 
-    // EXIT
+    // Numbers Screen Exit Effect
     ScrollTrigger.create({
       trigger: '#numbers-section',
       start: 'bottom 98%',
@@ -269,7 +267,7 @@ onMounted(async () => {
           opacity: 1 - p,
           y: -400 * p, 
           rotationX: 40 * p, 
-          skewY: 10 * p, // Extra motion
+          skewY: 10 * p,
           transformPerspective: 1200,
           clipPath: `inset(${p * 100}% 0% 0% 0%)`,
           filter: `blur(${p * 10}px) brightness(${1 + p * 1.5})`
@@ -325,9 +323,6 @@ onMounted(async () => {
     btn.addEventListener('click', handler)
     cleanupFns.push(() => btn.removeEventListener('click', handler))
   })
-
-  // (Deduplicated GLE Section logic moved above)
-
 
 }) // ← onMounted closes here ✅
 
@@ -431,78 +426,68 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <section id="gle-section">
-      <div class="gle-text-wrap">
-        <span class="gle-word">GLE</span>
-        <span class="gle-word">GLE</span>
-        <span class="gle-word">GLE</span>
-      </div>
-    </section>
-
-    <!-- FOOTER REVEAL SECTION -->
+    <!-- UNIFIED CINEMATIC FOOTER SECTION -->
     <section id="footer-reveal-section">
       <div id="footer-sticky-wrap">
-        <!-- Purple bloom behind the W to fill gaps -->
+        
+        <!-- The GLE Words (Merged into this section for smoothness) -->
+        <div class="gle-text-wrap" id="unified-gle-wrap">
+          <span class="gle-word side-gle">GLE</span>
+          <span class="gle-word" id="gle-mid">GLE</span>
+          <span class="gle-word side-gle">GLE</span>
+        </div>
+
+        <!-- Purple bloom behind the word -->
         <div id="w-bloom"></div>
+        <!-- Internal Logo Reveal -->
         <div id="w-overlay">W</div>
         
         <div id="footer-content">
           <footer id="footer">
             <div class="footer-top">
+
+              <!-- Brand / Tagline -->
               <div class="footer-brand">
-                <div class="footer-logo">GlobalGle</div>
+                <div class="footer-logo">Work With Us</div>
                 <p class="footer-desc">
-                  Building the infrastructure for 
-                  the global economy's next act.
+                  Ready to move money the right way?<br>
+                  GlobalGle — built for speed, compliance and scale.
                 </p>
                 <div class="footer-socials">
-                  <span class="social-cir">X</span>
-                  <span class="social-cir">LN</span>
-                  <span class="social-cir">IG</span>
-                  <span class="social-cir">YT</span>
-                </div>
-              </div>
-              
-              <div class="footer-nav">
-                <div class="nav-group">
-                  <span class="nav-label">Protocol</span>
-                  <a href="#">Network</a>
-                  <a href="#">Liquidity</a>
-                  <a href="#">Security</a>
-                  <a href="#">Open API</a>
-                </div>
-                <div class="nav-group">
-                  <span class="nav-label">Resources</span>
-                  <a href="#">Whitepaper</a>
-                  <a href="#">Documentation</a>
-                  <a href="#">Community</a>
-                  <a href="#">Guides</a>
-                </div>
-                <div class="nav-group">
-                  <span class="nav-label">Company</span>
-                  <a href="#">About Us</a>
-                  <a href="#">Careers</a>
-                  <a href="#">Press Kit</a>
-                  <a href="#">Contact</a>
+                  <a href="https://instagram.com" target="_blank" class="social-cir" aria-label="Instagram">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+                  </a>
+                  <a href="https://facebook.com" target="_blank" class="social-cir" aria-label="Facebook">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                  </a>
                 </div>
               </div>
 
-              <div class="footer-newsletter">
-                <span class="nav-label">Stay Connected</span>
-                <p>Join 2,000+ institutions scaling with GlobalGle.</p>
-                <div class="news-input-wrap">
-                  <input type="text" placeholder="Email address" />
-                  <button>→</button>
-                </div>
+              <!-- Quick Links -->
+              <div class="nav-group">
+                <span class="nav-label">Quick Links</span>
+                <a href="#">Work</a>
+                <a href="#">About</a>
+                <a href="#">Services</a>
+                <a href="#">Portfolio</a>
+                <a href="#">Contact</a>
               </div>
+
+              <!-- Contact Info -->
+              <div class="nav-group">
+                <span class="nav-label">Contact</span>
+                <span class="contact-item">GlobalGle Inc.</span>
+                <a href="mailto:hello@globalgle.com" class="contact-item">hello@globalgle.com</a>
+                <a href="tel:+2348000000000" class="contact-item">+234 800 000 0000</a>
+              </div>
+
             </div>
-            
+
             <div class="footer-legal">
               <div class="legal-left">
-                <span>© 2025 GlobalGle Inc.</span>
+                <span>© 2026 GlobalGle Inc. All rights reserved.</span>
                 <a href="#">Privacy</a>
                 <a href="#">Terms</a>
-                <a href="#">Sitemap</a>
               </div>
               <div class="legal-right">
                 <span class="status-pulse"></span> Network Active
@@ -516,6 +501,11 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+html, body {
+  background-color: #0a0d14; /* Global base black */
+  margin: 0;
+  padding: 0;
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: auto; }
 :global(body) {
@@ -532,23 +522,28 @@ html { scroll-behavior: auto; }
   width: 100vw;
   height: 100vh;
   z-index: 100;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   pointer-events: none;
+  overflow: hidden;
+  /* Removed flex-centering to prevent capsule distortion */
 }
 
 #hero-title {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
   font-family: 'Urbanist', sans-serif;
-  font-size: clamp(2rem, 7vw, 9rem);
+  font-size: clamp(2.2rem, 10vw, 10rem);
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   color: #fff;
   will-change: transform, opacity;
   opacity: 0;
+  text-align: center;
+  line-height: 1.1;
+  padding: 0 5vw;
 }
-.hero-letter { display: inline-block; position: relative; }
 
 .hero-btns {
   display: flex;
@@ -556,16 +551,20 @@ html { scroll-behavior: auto; }
   pointer-events: all;
   opacity: 1;
   border-radius: 100px;
-  padding: 5px;
-  background: rgba(8,8,8,0.48);
+  padding: clamp(4px, 1vw, 8px) clamp(8px, 2vw, 12px);
+  background: rgba(8,8,8,0.7);
   backdrop-filter: blur(40px) saturate(200%) brightness(1.05);
   border: 1px solid rgba(255,255,255,0.13);
   position: absolute;
-  top: 35%;
-  z-index: 20;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: clamp(1.5rem, 8vh, 8rem);
+  z-index: 101;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  width: max-content;
 }
-.btn-start { padding: 0.78rem 2.1rem; border-radius: 100px; font-weight: 600; cursor: pointer; color: #fff; background: rgba(0,80,40,0.85); border: 1.5px solid rgba(0,255,136,0.86); }
-.btn-login { padding: 0.78rem 2.1rem; border-radius: 100px; cursor: pointer; color: rgba(255,255,255,0.78); background: transparent; border: none; }
+.btn-start { padding: 0.6rem 1.8rem; border-radius: 100px; font-weight: 600; cursor: pointer; color: #fff; background: rgba(0,80,40,0.85); border: 1.5px solid rgba(0,255,136,0.86); font-size: clamp(0.75rem, 2vw, 1rem); }
+.btn-login { padding: 0.6rem 1.8rem; border-radius: 100px; cursor: pointer; color: rgba(255,255,255,0.78); background: transparent; border: none; font-size: clamp(0.75rem, 2vw, 1rem); }
 
 /* ── SECTIONS ─────────────────────────────────────────────────────────────── */
 #hero {
@@ -586,55 +585,76 @@ html { scroll-behavior: auto; }
 }
 
 /* NUMBERS */
-#numbers-section { width: 100vw; min-height: 120vh; background: #0a0d14; display: flex; align-items: center; justify-content: center; padding: 4rem; overflow: hidden; position: relative; z-index: 10; }
+#numbers-section { width: 100vw; min-height: 120vh; background: #0a0d14; display: flex; align-items: center; justify-content: center; padding: clamp(1rem, 5vw, 4rem); overflow: hidden; position: relative; z-index: 10; }
 .numbers-screen { 
   position: relative; 
-  width: min(860px, 90vw); 
-  min-height: 480px; 
+  width: min(860px, 95vw); 
+  min-height: clamp(300px, 50vh, 480px); 
   border-radius: 24px; 
   border: 1px solid rgba(255, 255, 255, 0.1); 
   background: rgba(255, 255, 255, 0.03); 
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  padding: 3.5rem 2.5rem 2.5rem; 
+  padding: clamp(1.5rem, 5vw, 3.5rem) clamp(1rem, 3vw, 2.5rem); 
   display: flex; 
   flex-direction: column; 
   justify-content: center; 
-  gap: 1.2rem; 
+  gap: 1rem; 
   overflow: hidden; 
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
-.screen-chrome { position: absolute; top: 1.1rem; left: 1.4rem; display: flex; gap: 0.45rem; }
-.chrome-dot { width: 10px; height: 10px; border-radius: 50%; }
+.screen-chrome { position: absolute; top: 1rem; left: 1.2rem; display: flex; gap: 0.4rem; }
+.chrome-dot { width: 8px; height: 8px; border-radius: 50%; }
 .chrome-dot:nth-child(1) { background: rgba(255,80,80,0.55); border: 1px solid rgba(255,80,80,0.7); }
 .chrome-dot:nth-child(2) { background: rgba(255,200,0,0.55); border: 1px solid rgba(255,200,0,0.7); }
 .chrome-dot:nth-child(3) { background: rgba(0,255,136,0.55); border: 1px solid rgba(0,255,136,0.7); }
-.number-layer { display: flex; gap: 4rem; margin: 1.8rem 0; white-space: nowrap; }
+.number-layer { display: flex; gap: clamp(1rem, 4vw, 4rem); margin: 1.2rem 0; white-space: nowrap; }
 .number-item { font-family: 'Urbanist', sans-serif; font-weight: 800; line-height: 1; will-change: transform, opacity; }
-.nl-top .number-item { font-size: clamp(3rem, 8vw, 7rem); color: rgba(0,255,136,0.4); -webkit-text-stroke: 1px rgba(255,255,255,0.15); }
-.nl-mid .number-item { font-size: clamp(5rem, 14vw, 13rem); -webkit-text-stroke: 2px rgba(0,255,136,0.4); color: transparent; }
-.nl-bot .number-item { font-size: clamp(2.5rem, 6vw, 5rem); color: rgba(0,255,136,0.4); -webkit-text-stroke: 1px rgba(255,255,255,0.15); }
+.nl-top .number-item { font-size: clamp(1.5rem, 6vw, 7rem); color: rgba(0,255,136,0.4); -webkit-text-stroke: 1px rgba(255,255,255,0.15); }
+.nl-mid .number-item { font-size: clamp(2.5rem, 12vw, 13rem); -webkit-text-stroke: 2px rgba(0,255,136,0.4); color: transparent; }
+.nl-bot .number-item { font-size: clamp(1.2rem, 5vw, 5rem); color: rgba(0,255,136,0.4); -webkit-text-stroke: 1px rgba(255,255,255,0.15); }
 
 /* FAQ */
-#faq-section { width: 100vw; min-height: 100vh; background: #0a0d14; padding: 6rem 10vw; position: relative; z-index: 10; }
-.faq-label { font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; color: #00ff88; display: block; text-align: center; }
-.faq-header { font-family: 'Urbanist', sans-serif; font-size: clamp(2rem, 5vw, 4rem); font-weight: 800; margin: 1rem auto 3rem; max-width: 700px; text-align: center; }
-.faq-item { border: 1px solid #1f1f1f; border-radius: 14px; padding: 1.5rem 1.8rem; margin-bottom: 0.75rem; background: rgba(255,255,255,0.02); transition: all 0.2s; }
+#faq-section { width: 100vw; min-height: 100vh; background: #0a0d14; padding: clamp(3rem, 8vw, 6rem) 5vw; position: relative; z-index: 10; }
+.faq-label { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #00ff88; display: block; text-align: center; }
+.faq-header { font-family: 'Urbanist', sans-serif; font-size: clamp(1.5rem, 5vw, 4rem); font-weight: 800; margin: 1rem auto 2.5rem; max-width: 700px; text-align: center; }
+.faq-item { border: 1px solid #1f1f1f; border-radius: 12px; padding: clamp(1rem, 3vw, 1.8rem); margin-bottom: 0.6rem; background: rgba(255,255,255,0.02); transition: all 0.2s; }
 .faq-item.open { border-color: rgba(0,255,136,0.35); background: rgba(0,255,136,0.04); }
-.faq-q { display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 1.05rem; font-weight: 500; }
-.faq-a { max-height: 0; overflow: hidden; transition: all 0.4s ease; color: #6b7280; font-size: 0.95rem; }
-.faq-item.open .faq-a { max-height: 200px; padding-top: 1rem; }
+.faq-q { display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: clamp(0.9rem, 2vw, 1.05rem); font-weight: 500; gap: 1rem; }
+.faq-a { max-height: 0; overflow: hidden; transition: all 0.4s ease; color: #6b7280; font-size: clamp(0.85rem, 2vw, 0.95rem); }
+.faq-item.open .faq-a { max-height: 250px; padding-top: 1rem; }
 
-/* GLE */
-#gle-section { width: 100vw; min-height: 80vh; background: #0a0d14; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; z-index: 15; }
-.gle-text-wrap { display: flex; gap: clamp(1rem, 4vw, 4rem); }
-.gle-word { font-family: 'Urbanist', sans-serif; font-size: clamp(4rem, 12vw, 11rem); font-weight: 800; color: transparent; -webkit-text-stroke: 1.5px rgba(255,255,255,0.18); }
+/* Unified Reveal CSS */
+.gle-text-wrap { 
+  position: absolute; 
+  top: 25%; /* Mobile default */
+  left: 50%; 
+  transform: translate(-50%, -50%); 
+  display: flex; 
+  gap: clamp(1rem, 5vw, 8rem); 
+  align-items: center; 
+  z-index: 10;
+}
+@media (min-width: 768px) {
+  .gle-text-wrap { top: 6%; } /* Forced high at the very top */
+}
+.gle-word { 
+  font-family: 'Urbanist', sans-serif; 
+  font-size: clamp(2.5rem, 10vw, 11rem); 
+  font-weight: 800; 
+  color: transparent; 
+  -webkit-text-stroke: 1.5px rgba(255,255,255,0.18); 
+  opacity: 1; /* Instant presence */
+}
+
 
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 300vh;
-  background: #2d0a4e; /* Full purple — no black gaps */
+  height: 140vh;
+  background: #000;
+  z-index: 30; 
+  margin-top: 0; 
 }
 
 #footer-sticky-wrap {
@@ -642,27 +662,24 @@ html { scroll-behavior: auto; }
   top: 0;
   width: 100vw;
   height: 100vh;
-  background: #0d0020;
+  background: #0a0d14;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
 }
 
-/* Bloom fills the gaps the W letter strokes leave behind */
 #w-bloom {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 4vw;
-  height: 4vw;
+  width: 25vw;
+  height: 25vw;
+  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); /* Neutral faint white, NO purple */
   border-radius: 50%;
-  background: radial-gradient(circle, #7c3aed 0%, #4c1d95 50%, #2d0a4e 100%);
-  filter: blur(60px);
+  z-index: 15;
+  filter: blur(80px);
   pointer-events: none;
   opacity: 0;
-  z-index: 5;
   will-change: transform, opacity;
 }
 
@@ -675,7 +692,10 @@ html { scroll-behavior: auto; }
   font-family: 'Urbanist', sans-serif;
   font-size: 25vw;
   font-weight: 900;
-  color: #8b5cf6;
+  /* Glassy purple — matches the morphed middle GLE */
+  color: rgba(139, 92, 246, 0.15);
+  -webkit-text-stroke: 2px rgba(139, 92, 246, 0.9);
+  text-shadow: 0 0 80px rgba(139, 92, 246, 0.7), 0 0 160px rgba(139, 92, 246, 0.3);
   pointer-events: none;
   opacity: 0;
   will-change: transform, opacity;
@@ -692,7 +712,7 @@ html { scroll-behavior: auto; }
   justify-content: center;
   opacity: 0;
   z-index: 200;
-  padding: 4rem 6vw;
+  padding: clamp(2rem, 5vw, 4rem) 6vw;
 }
 
 #footer {
@@ -703,16 +723,17 @@ html { scroll-behavior: auto; }
 
 .footer-top {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 4rem;
-  padding-bottom: 5rem;
+  gap: clamp(2rem, 4vw, 4rem);
+  padding-bottom: clamp(2rem, 5vw, 5rem);
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-.footer-brand { flex: 1; min-width: 280px; }
+.footer-brand { flex: 1; min-width: min(100%, 280px); }
 
 .footer-logo {
-  font-size: 2.4rem;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
   font-weight: 800;
   margin-bottom: 1.2rem;
   letter-spacing: -0.02em;
@@ -721,7 +742,7 @@ html { scroll-behavior: auto; }
 .footer-desc {
   color: rgba(255,255,255,0.5);
   line-height: 1.6;
-  font-size: 1.05rem;
+  font-size: clamp(0.9rem, 1.5vw, 1.05rem);
   margin-bottom: 2.2rem;
   max-width: 240px;
 }
@@ -741,10 +762,20 @@ html { scroll-behavior: auto; }
   transition: 0.3s;
 }
 .social-cir:hover { border-color: #8b5cf6; color: #8b5cf6; }
+.social-cir svg { width: 18px; height: 18px; display: block; }
 
-.footer-nav { flex: 2; display: flex; justify-content: space-around; gap: 2rem; }
+.contact-item {
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+  transition: color 0.2s;
+  display: block;
+}
+.contact-item:hover { color: #fff; }
 
-.nav-group { display: flex; flex-direction: column; gap: 1rem; }
+.footer-nav { flex: 2; display: flex; flex-wrap: wrap; justify-content: space-around; gap: 2rem; }
+
+.nav-group { display: flex; flex-direction: column; gap: 1rem; min-width: 140px; }
 .nav-label {
   font-size: 0.85rem;
   font-weight: 800;
@@ -756,7 +787,7 @@ html { scroll-behavior: auto; }
 .nav-group a {
   color: rgba(255,255,255,0.45);
   text-decoration: none;
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 1.5vw, 1rem);
   transition: 0.2s;
 }
 .nav-group a:hover { color: #fff; }
@@ -892,7 +923,7 @@ html { scroll-behavior: auto; }
 
 /* Mobile (≤768px) */
 @media (max-width: 768px) {
-  .hero-btns { top: 28%; }
+  .hero-btns { bottom: 15%; top: auto; }
   .btn-start, .btn-login { padding: 0.65rem 1.4rem; font-size: 0.88rem; }
 
   #numbers-section { padding: 2rem 1rem; min-height: unset; }
@@ -920,7 +951,7 @@ html { scroll-behavior: auto; }
 
 /* Small phones (≤480px) */
 @media (max-width: 480px) {
-  .hero-btns { top: 22%; }
+  .hero-btns { bottom: 12%; top: auto; }
   .btn-start, .btn-login { padding: 0.55rem 1.1rem; font-size: 0.82rem; }
 
   #numbers-section { padding: 1.5rem 0.5rem; }

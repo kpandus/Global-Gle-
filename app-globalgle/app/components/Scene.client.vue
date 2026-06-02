@@ -69,10 +69,22 @@ function setLighting(scene) {
   }
 }
 
+const getDisplayMode = () => {
+  if (typeof window === 'undefined') return { isDesktop: true, isMobile: false }
+  
+  const isAndroid = /Android/i.test(navigator.userAgent)
+  const isLargeScreen = window.innerWidth > 1024
+  
+  // Specific request: Android devices show the desktop view (with laptop)
+  const isDesktop = isLargeScreen || isAndroid
+  return { isDesktop, isMobile: !isDesktop }
+}
+
 onMounted(async () => {
   if (!canvasDiv.value) return
   await new Promise(r => setTimeout(r, 50))
 
+  const { isDesktop } = getDisplayMode()
   const rect = canvasDiv.value.getBoundingClientRect()
   const w = rect.width || window.innerWidth
   const h = rect.height || window.innerHeight
@@ -87,20 +99,28 @@ onMounted(async () => {
   renderer.domElement.style.zIndex = '1'
   canvasDiv.value.appendChild(renderer.domElement)
 
-  // ── Camera – portrait framing (face + upper chest) ──────────────────
-  const isMobile = w < 768
+  // ── Camera framing ──────────────────────────────────
   camera = new THREE.PerspectiveCamera(12, w / h, 0.1, 1000)
-  if (isMobile) {
-    camera.position.set(0, 12.0, 32)
-  } else {
-    camera.position.set(0, 12.0, 30)
+  
+  const updateCamera = () => {
+    const { isDesktop: desktopMode } = getDisplayMode()
+    if (desktopMode) {
+      // Desktop: Show the workstation/laptop
+      camera.position.set(0, 13.1, 26.5)
+      camera.lookAt(0, 12.0, 0)
+    } else {
+      // Mobile (iOS etc): Zoom in on character
+      camera.position.set(0, 12.0, 35) 
+      camera.lookAt(0, 13.0, 0)
+    }
+    camera.aspect = window.innerWidth / window.innerHeight
+    camera.updateProjectionMatrix()
   }
-  camera.lookAt(0, 13.0, 0)
-  camera.updateProjectionMatrix()
+  updateCamera()
 
   const light = setLighting(scene)
 
-  // HDR environment (keep for reflections)
+  // HDR environment
   try {
     const { RGBELoader } = await import('three/examples/jsm/loaders/RGBELoader.js')
     const pmrem = new THREE.PMREMGenerator(renderer)
@@ -116,7 +136,7 @@ onMounted(async () => {
     console.warn('HDR load failed:', e)
   }
 
-  // ── Load character (without animations) ─────────────────────────────
+  // ── Load character ─────────────────────────────
   const gltfLoader = new GLTFLoader()
   const dracoLoader = new DRACOLoader()
   dracoLoader.setDecoderPath('/draco/')
@@ -131,75 +151,55 @@ onMounted(async () => {
     })
 
     const character = gltf.scene
-
-    // ── Phase 1 Implementation (Targeted Container Hiding) ───────────────
-
-    // 1. Hide the known main prop containers from the original repo
-    const propContainers = ['Plane004', 'screenlight', 'monitor', 'keyboard', 'laptop', 'desk', 'chair', 'hands']
-    propContainers.forEach(name => {
-      const obj = character.getObjectByName(name)
-      if (obj) {
-        obj.visible = false
-        obj.scale.set(0, 0, 0)
-        obj.traverse(child => {
-          child.visible = false
-          if (child.scale) child.scale.set(0, 0, 0)
-        })
-      }
-    })
-
-    // 2. Traverse everything to catch loose props and protect character
+    const { isDesktop: desktopMode } = getDisplayMode()
+    
     character.traverse((child) => {
+      if (!child.isMesh) return
+
       const name = child.name.toLowerCase()
+      // Whitelist for character body parts
       const isCharacterPart = child.type === 'SkinnedMesh' || 
                               name.includes('body') || name.includes('head') || 
                               name.includes('shirt') || name.includes('pant') || 
                               name.includes('shoe') || name.includes('hair') || 
                               name.includes('skin') || name.includes('eye') || 
-                              (name.includes('hand') && child.type === 'SkinnedMesh') ||
-                              name.includes('foot') || 
-                              name.includes('jean') || name.includes('sneaker') || 
-                              name.includes('cloth') || name.includes('male') || 
-                              name.includes('character') || name.includes('avatar')
+                              name.includes('hand') || name.includes('foot') || 
+                              name.includes('male') || name.includes('character') || 
+                              name.includes('avatar') || name.includes('jean') ||
+                              name.includes('sneaker') || name.includes('hoodie') ||
+                              name.includes('cloth')
 
-      if (child.isMesh) {
-        const isProp = name.includes('plane004') || name.includes('screenlight') || 
-                       name.includes('monitor') || name.includes('keyboard') || 
-                       name.includes('laptop') || name.includes('desk') || 
-                       name.includes('table') || name.includes('prop') ||
-                       name.includes('chair') || name.includes('furniture') ||
-                       name.includes('hands') || (name.includes('hand') && child.type !== 'SkinnedMesh')
-
-        if (isProp && !isCharacterPart) {
+      if (desktopMode) {
+        // Desktop / Android: Show full workstation + laptop
+        child.visible = true
+        if (child.scale.x === 0) child.scale.set(1, 1, 1)
+        if (child.material) child.material.opacity = 1
+      } else {
+        // Mobile (iPhone etc): Hide laptop and workstation
+        if (!isCharacterPart) {
           child.visible = false
           child.scale.set(0, 0, 0)
           if (child.material) {
             child.material.transparent = true
             child.material.opacity = 0
           }
-        } else if (isCharacterPart) {
+        } else {
           child.visible = true
           if (child.scale.x === 0) child.scale.set(1, 1, 1)
-          child.castShadow = true
-          child.receiveShadow = true
-          child.frustumCulled = true
-        } else {
-          // If it's neither a known prop nor a character part, hide it just to be safe if it's prop-like
-          if (name.includes('hand') || name.includes('prop')) {
-            child.visible = false
-            child.scale.set(0, 0, 0)
-          }
         }
+      }
+
+      if (child.visible) {
+        child.castShadow = true
+        child.receiveShadow = true
       }
     })
 
-    // Adjust foot positions
     const footR = character.getObjectByName('footR')
     const footL = character.getObjectByName('footL')
     if (footR) footR.position.y = 3.36
     if (footL) footL.position.y = 3.36
 
-    // ── Precise Arm Rotation (Downwards pose) ───────────────────────────
     const armL = character.getObjectByName('upper_armL')
     const armR = character.getObjectByName('upper_armR')
     const forearmL = character.getObjectByName('lower_armL')
@@ -207,11 +207,10 @@ onMounted(async () => {
     const handL = character.getObjectByName('handL')
     const handR = character.getObjectByName('handR')
     
-    if (armL) {
-      armL.rotation.set(-1.57, 0, 0) // Match the right arm's downward rotation
-    }
-    if (armR) {
-      armR.rotation.set(-1.57, 0, 0) // Keep right arm down
+    if (!desktopMode) {
+      // Arms down for character-only mobile view
+      if (armL) armL.rotation.set(-1.57, 0, 0)
+      if (armR) armR.rotation.set(-1.57, 0, 0)
     }
     if (forearmL) forearmL.rotation.set(0, 0, 0)
     if (forearmR) forearmR.rotation.set(0, 0, 0)
@@ -220,17 +219,28 @@ onMounted(async () => {
 
     scene.add(character)
     character.rotation.y = 0
-    // ── ANIMATIONS (Blinking) ─────────────────────────────────────────
+
     mixer = new THREE.AnimationMixer(character)
     const blinkClip = gltf.animations.find(clip => clip.name === 'Blink')
-    if (blinkClip) {
-      const blinkAction = mixer.clipAction(blinkClip)
-      blinkAction.play()
+    if (blinkClip) mixer.clipAction(blinkClip).play()
+
+    if (desktopMode) {
+      // Desktop / Android: Play typing animations at the laptop
+      const introClip = gltf.animations.find(clip => clip.name === 'introAnimation')
+      if (introClip) {
+        const action = mixer.clipAction(introClip)
+        action.clampWhenFinished = true
+        action.setLoop(THREE.LoopOnce, 1)
+        action.play()
+      }
+
+      ['key1', 'key2', 'key5', 'key6', 'typing'].forEach(name => {
+        const clip = gltf.animations.find(c => c.name === name)
+        if (clip) mixer.clipAction(clip).play()
+      })
     }
 
     const clock = new THREE.Clock()
-    
-    // ── SCROLL-DRIVEN REVEAL (Ease into existence) ─────────────────────
     const rim = canvasDiv.value.querySelector('.character-rim')
     
     const handleReveal = () => {
@@ -252,7 +262,10 @@ onMounted(async () => {
       }
 
       const easedP = Math.pow(p, 3)
-      const scaleVal = 0.4 + (easedP * 0.6) 
+      
+      const { isDesktop: desktopModeNow } = getDisplayMode()
+      const baseScale = desktopModeNow ? 0.4 : 0.45
+      const scaleVal = baseScale + (easedP * (1.0 - baseScale)) 
 
       if (character) {
         character.scale.set(scaleVal, scaleVal, scaleVal)
@@ -273,28 +286,33 @@ onMounted(async () => {
     }
     
     window.addEventListener('scroll', handleReveal, { passive: true })
-    handleReveal() // Initial sync
+    handleReveal() 
+
+    const onResize = () => {
+      const nW = window.innerWidth
+      const nH = window.innerHeight
+      renderer.setSize(nW, nH)
+      updateCamera()
+    }
+    window.addEventListener('resize', onResize)
+    cleanupFns.push(() => window.removeEventListener('resize', onResize))
 
     const animateLoop = () => {
       animationId = requestAnimationFrame(animateLoop)
-      
       const delta = clock.getDelta()
       if (mixer) mixer.update(delta)
-
       renderer.render(scene, camera)
     }
     animateLoop()
 
-    // Add to cleanup
     cleanupFns.push(() => window.removeEventListener('scroll', handleReveal))
-
-    // Clean up
     URL.revokeObjectURL(blobUrl)
     dracoLoader.dispose()
   } catch (err) {
     console.error('Character failed to load:', err)
   }
 })
+
 
 onUnmounted(() => {
   if (animationId) cancelAnimationFrame(animationId)

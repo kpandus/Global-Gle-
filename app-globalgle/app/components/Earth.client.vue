@@ -31,8 +31,8 @@ function easeInOutCubic(t) {
 
 onMounted(() => {
   const canvas = c.value
-  const W = window.innerWidth
-  const H = window.innerHeight
+  let W = window.innerWidth
+  let H = window.innerHeight
 
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
   renderer.setSize(W, H)
@@ -40,7 +40,14 @@ onMounted(() => {
 
   const scene = new THREE.Scene()
   const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 1000)
-  camera.position.z = 5
+  
+  const updateCamera = () => {
+    const isMobile = window.innerWidth <= 768
+    camera.position.z = isMobile ? 6 : 5
+    camera.aspect = window.innerWidth / window.innerHeight
+    camera.updateProjectionMatrix()
+  }
+  updateCamera()
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.7))
   const sun = new THREE.DirectionalLight(0xffffff, 2.5)
@@ -51,60 +58,68 @@ onMounted(() => {
   const texture = new THREE.TextureLoader().load('/bg-image.JPG')
 
   // Build fragments — 3 vertical segments
-  const R = 1.1 // Smaller
+  const getRadius = () => {
+    const isMobile = window.innerWidth <= 768
+    return isMobile ? 0.9 : 1.1
+  }
+  
+  let R = getRadius()
   const numPieces = 3
 
-  for (let i = 0; i < numPieces; i++) {
-    const phiStart = 0
-    const phiEnd = Math.PI
-    const thetaStart = (i / numPieces) * Math.PI * 2
-    const thetaEnd = ((i + 1) / numPieces) * Math.PI * 2
-
-    // Use higher segment count for smooth curves
-    const geo = new THREE.SphereGeometry(
-      R, 32, 32,
-      thetaStart, thetaEnd - thetaStart,
-      phiStart, phiEnd - phiStart
-    )
-
-    const mat = new THREE.MeshStandardMaterial({
-      map: texture,
-      side: THREE.DoubleSide,
-      roughness: 0.5,
-      metalness: 0.2
-    })
-
-    const mesh = new THREE.Mesh(geo, mat)
-
-    // Offset the whole globe downward slightly to avoid touching the navbar
+  const createFragments = () => {
+    fragments.forEach(f => scene.remove(f))
+    fragments = []
+    fragmentTargets = []
+    fragmentOrigins = []
+    
+    R = getRadius()
     const verticalOffset = -0.1
     const assembledPos = new THREE.Vector3(0, verticalOffset, 0)
 
-    // Shattered positions — distinct directions for the 3 pieces
-    let shatteredPos, shatteredRot
-    if (i === 0) {
-      // Left Top
-      shatteredPos = new THREE.Vector3(-1.2, 0.4 + verticalOffset, -0.3)
-      shatteredRot = new THREE.Euler(0.3, -0.4, 0.2)
-    } else if (i === 1) {
-      // Right Top
-      shatteredPos = new THREE.Vector3(1.2, 0.4 + verticalOffset, -0.3)
-      shatteredRot = new THREE.Euler(0.3, 0.4, -0.2)
-    } else {
-      // Bottom Center
-      shatteredPos = new THREE.Vector3(0.4, -0.9 + verticalOffset, 0.3)
-      shatteredRot = new THREE.Euler(-0.5, 0, 0)
+    for (let i = 0; i < numPieces; i++) {
+      const phiStart = 0
+      const phiEnd = Math.PI
+      const thetaStart = (i / numPieces) * Math.PI * 2
+      const thetaEnd = ((i + 1) / numPieces) * Math.PI * 2
+
+      const geo = new THREE.SphereGeometry(
+        R, 32, 32,
+        thetaStart, thetaEnd - thetaStart,
+        phiStart, phiEnd - phiStart
+      )
+
+      const mat = new THREE.MeshStandardMaterial({
+        map: texture,
+        side: THREE.DoubleSide,
+        roughness: 0.5,
+        metalness: 0.2
+      })
+
+      const mesh = new THREE.Mesh(geo, mat)
+
+      let shatteredPos, shatteredRot
+      if (i === 0) {
+        shatteredPos = new THREE.Vector3(-1.2, 0.4 + verticalOffset, -0.3)
+        shatteredRot = new THREE.Euler(0.3, -0.4, 0.2)
+      } else if (i === 1) {
+        shatteredPos = new THREE.Vector3(1.2, 0.4 + verticalOffset, -0.3)
+        shatteredRot = new THREE.Euler(0.3, 0.4, -0.2)
+      } else {
+        shatteredPos = new THREE.Vector3(0.4, -0.9 + verticalOffset, 0.3)
+        shatteredRot = new THREE.Euler(-0.5, 0, 0)
+      }
+
+      mesh.position.copy(shatteredPos)
+      mesh.rotation.copy(shatteredRot)
+
+      scene.add(mesh)
+      fragments.push(mesh)
+      fragmentTargets.push({ pos: assembledPos, rot: new THREE.Euler(0, 0, 0) })
+      fragmentOrigins.push({ pos: shatteredPos.clone(), rot: shatteredRot.clone() })
     }
-
-    // Start shattered
-    mesh.position.copy(shatteredPos)
-    mesh.rotation.copy(shatteredRot)
-
-    scene.add(mesh)
-    fragments.push(mesh)
-    fragmentTargets.push({ pos: assembledPos, rot: new THREE.Euler(0, 0, 0) })
-    fragmentOrigins.push({ pos: shatteredPos.clone(), rot: shatteredRot.clone() })
   }
+
+  createFragments()
 
   let autoRotY = 0
 
@@ -133,11 +148,10 @@ onMounted(() => {
   loop()
 
   const onResize = () => {
-    const nW = window.innerWidth
-    const nH = window.innerHeight
-    camera.aspect = nW / nH
-    camera.updateProjectionMatrix()
-    renderer.setSize(nW, nH)
+    W = window.innerWidth
+    H = window.innerHeight
+    renderer.setSize(W, H)
+    updateCamera()
   }
   window.addEventListener('resize', onResize)
   window.addEventListener('orientationchange', () => setTimeout(onResize, 300))
