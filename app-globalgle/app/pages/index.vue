@@ -95,8 +95,8 @@ onMounted(async () => {
         const landingPoint = hh + (sh * 0.2)
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
 
-        // Pushed docking points down: 0.35 for desktop (~15% from top), 0.05 for mobile (~45% from top)
-        const targetY = isMobile ? -baseH * 0.05 : -baseH * 0.35
+        // Docking: Desktop high (-0.35), Mobile at center (0) as requested (52% height)
+        const targetY = isMobile ? 0 : -baseH * 0.35
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
@@ -106,16 +106,17 @@ onMounted(async () => {
         if (scrollY > landingPoint) {
            yPos = targetY
 
-           // UN-STICK LOGIC: Start moving away much sooner to avoid feeling "stuck"
-           const unstickPoint = hh + sh * 0.2 
-           if (scrollY > unstickPoint) {
-              yPos -= (scrollY - unstickPoint)
-           }
-           
-           // Threshold matches the docking point
-           const topThreshold = targetY - 20
-           if (yPos < topThreshold) {
-              topFade = Math.max(0, 1 - (topThreshold - yPos) / 100)
+           // UN-STICK LOGIC: Only apply to desktop, as user wants mobile to "stick there"
+           if (!isMobile) {
+             const unstickPoint = hh + sh * 0.2 
+             if (scrollY > unstickPoint) {
+                yPos -= (scrollY - unstickPoint)
+             }
+             
+             const topThreshold = targetY - 20
+             if (yPos < topThreshold) {
+                topFade = Math.max(0, 1 - (topThreshold - yPos) / 100)
+             }
            }
         }
 
@@ -555,7 +556,7 @@ html { scroll-behavior: auto; }
 
 #hero-title {
   position: absolute;
-  top: 50%;
+  top: 52%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 100%;

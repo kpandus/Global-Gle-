@@ -189,7 +189,7 @@ watch(() => props.percent, (newVal) => {
 
 .loading-marquee {
   position: absolute;
-  top: 50%;
+  top: 52%;
   left: 0;
   width: 100%;
   transform: translateY(-50%);
@@ -303,7 +303,7 @@ watch(() => props.percent, (newVal) => {
 
 .loading-content2 {
   position: absolute;
-  top: 50%;
+  top: 52%;
   left: 50%;
   transform: translate(-50%, -50%) translateY(40px);
   color: #fff;
