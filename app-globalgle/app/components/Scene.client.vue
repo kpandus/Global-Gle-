@@ -109,9 +109,9 @@ onMounted(async () => {
       camera.position.set(0, 11.0, 42.0)
       camera.lookAt(0, 9.5, 0)
     } else {
-      // Mobile (iOS etc): Zoom in on character
-      camera.position.set(0, 12.0, 35) 
-      camera.lookAt(0, 13.0, 0)
+      // Mobile (iOS etc): Zoom in on character, framing to show ~80% of body (20% cut)
+      camera.position.set(0, 13.8, 34) 
+      camera.lookAt(0, 14.8, 0)
     }
     camera.aspect = window.innerWidth / window.innerHeight
     camera.updateProjectionMatrix()
@@ -171,11 +171,7 @@ onMounted(async () => {
                               name.includes('arm') || name.includes('neck') ||
                               name.includes('torso') || name.includes('waist') ||
                               name.includes('hips') || name.includes('thigh') ||
-                              name.includes('shin') || name.includes('shoulder') ||
-                              name.includes('seat') || name.includes('chair') ||
-                              name.includes('stool') || name.includes('desk') ||
-                              name.includes('table') || name.includes('workstation') ||
-                              name.includes('plane')
+                              name.includes('shin') || name.includes('shoulder')
 
       if (desktopMode) {
         // Desktop / Android: Show full workstation + laptop

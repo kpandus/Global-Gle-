@@ -15,10 +15,10 @@
     <div class="loading-screen" v-if="!finished">
       <div class="loading-marquee">
         <div class="marquee-content">
-          <span>GLOBALGLE CROSS-BORDER PAYMENTS</span>
-          <span>GLOBALGLE CROSS-BORDER PAYMENTS</span>
-          <span>GLOBALGLE CROSS-BORDER PAYMENTS</span>
-          <span>GLOBALGLE CROSS-BORDER PAYMENTS</span>
+          <span>GLOBAL GLE CROSS-BORDER PAYMENTS</span>
+          <span>GLOBAL GLE CROSS-BORDER PAYMENTS</span>
+          <span>GLOBAL GLE CROSS-BORDER PAYMENTS</span>
+          <span>GLOBAL GLE CROSS-BORDER PAYMENTS</span>
         </div>
       </div>
 

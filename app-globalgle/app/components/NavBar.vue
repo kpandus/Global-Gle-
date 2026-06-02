@@ -15,17 +15,21 @@ const menuOpen = ref(false)
         <span class="ring ring-1"></span>
         <span class="ring ring-2"></span>
         <span class="ring ring-3"></span>
-        <img :src="logoSrc" alt="GlobalGLE logo" class="nav-logo" />
+        <img :src="logoSrc" alt="Global Gle logo" class="nav-logo" />
       </div>
     </div>
 
-    <!-- CENTER: links -->
+    <!-- CENTER: links & brand -->
     <div class="nav-center">
-      <a href="#" class="nav-link">Work</a>
-      <a href="#" class="nav-link">About</a>
-      <span class="nav-brand">GlobalGLE</span>
-      <a href="#" class="nav-link">Services</a>
-      <a href="#" class="nav-link">Portfolio</a>
+      <div class="nav-links-group">
+        <a href="#" class="nav-link">Work</a>
+        <a href="#" class="nav-link">About</a>
+      </div>
+      <span class="nav-brand">Global GLE</span>
+      <div class="nav-links-group">
+        <a href="#" class="nav-link">Services</a>
+        <a href="#" class="nav-link">Portfolio</a>
+      </div>
     </div>
 
     <!-- RIGHT: contact -->
@@ -77,7 +81,8 @@ const menuOpen = ref(false)
 
 /* ── Columns ──────────────────────────────────────────────────────────────── */
 .nav-left  { display: flex; align-items: center; justify-content: flex-start; }
-.nav-center { display: flex; align-items: center; gap: 0.25rem; }
+.nav-center { display: flex; align-items: center; gap: 1.2rem; }
+.nav-links-group { display: flex; align-items: center; gap: 0.25rem; }
 .nav-right  { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; }
 
 /* ── Logo ─────────────────────────────────────────────────────────────────── */
@@ -225,8 +230,8 @@ const menuOpen = ref(false)
     padding: 0 0.75rem 0 0.5rem;
     grid-template-columns: auto 1fr auto;
   }
-  .nav-center { display: none; }
-  .nav-brand  { display: none; }
+  .nav-links-group { display: none; }
+  .nav-center { justify-content: center; }
   .hamburger  { display: flex; }
 }
 
@@ -235,6 +240,7 @@ const menuOpen = ref(false)
   #navbar { width: calc(100% - 1.5rem); height: 50px; }
   .logo-wrap, .nav-logo { width: 36px; height: 36px; }
   .nav-contact-btn { font-size: 0.72rem; padding: 0.45rem 1rem; letter-spacing: 0.08em; }
+  .nav-brand { font-size: 0.85rem; letter-spacing: 0.04em; }
 }
 
 /* Small phones (≤480px) */

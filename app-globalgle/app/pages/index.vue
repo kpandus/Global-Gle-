@@ -14,17 +14,35 @@ onMounted(async () => {
   const $ = (sel) => document.querySelector(sel)
   const $$ = (sel) => document.querySelectorAll(sel)
 
+  // ─── STABLE DIMENSIONS ──────────────────────────────────────────────────
+  let baseH = window.innerHeight
+  let baseW = window.innerWidth
+
+  const updateDimensions = () => {
+    if (window.innerWidth !== baseW) {
+      baseW = window.innerWidth
+      baseH = window.innerHeight
+      ScrollTrigger.refresh()
+    }
+  }
+  window.addEventListener('resize', updateDimensions)
+  cleanupFns.push(() => window.removeEventListener('resize', updateDimensions))
+
   // ─── NAVBAR ───────────────────────────────────────────────────────────────
   const navbar = $('#navbar')
+  const navBrand = $('.nav-brand')
   const onScroll = () => {
     if (navbar) navbar.classList.toggle('scrolled', window.scrollY > 80)
   }
   window.addEventListener('scroll', onScroll, { passive: true })
   cleanupFns.push(() => window.removeEventListener('scroll', onScroll))
 
-  // ─── ANIMATION CONSTANTS (Reactive for orientation changes) ───────────────
-  const getHeroH = () => 400 * (window.innerHeight / 100)
-  const getSceneH = () => 250 * (window.innerHeight / 100)
+  // Hide nav brand initially for reveal effect
+  if (navBrand) gsap.set(navBrand, { opacity: 0 })
+
+  // ─── ANIMATION CONSTANTS ─────────────────────────────────────────────────
+  const getHeroH = () => 4 * baseH
+  const getSceneH = () => 2.5 * baseH
 
   // ─── HERO & TRAVEL LOGIC ──────────────────────────────────────────────────
   const title = $('#hero-title')
@@ -37,10 +55,10 @@ onMounted(async () => {
   ScrollTrigger.create({
     trigger: '#hero',
     start: 'top top',
-    end: () => `bottom+=${getSceneH()} top`,
+    end: () => `bottom+=${document.body.scrollHeight} top`,
     scrub: 1,
     onUpdate: (self) => {
-      const scrollY = window.scrollY
+      const scrollY = self.scroll()
       
       const isAndroid = /Android/i.test(navigator.userAgent)
       const isLargeScreen = window.matchMedia("(min-width: 1025px)").matches
@@ -65,7 +83,7 @@ onMounted(async () => {
       }
 
       if (scrollY < appearanceStart) {
-        gsap.set(title, { opacity: 0 })
+        gsap.set(title, { opacity: 0, y: 0 })
       } else if (scrollY < appearanceEnd) {
         const revealP = (scrollY - appearanceStart) / (appearanceEnd - appearanceStart)
         gsap.set(title, { opacity: revealP, scale: 1, y: 0, color: '#fff' })
@@ -73,12 +91,12 @@ onMounted(async () => {
         gsap.set(title, { opacity: 1 })
       }
 
-      if (scrollY > appearanceEnd) {
+      if (scrollY >= appearanceEnd) {
         const landingPoint = hh + (sh * 0.2)
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
 
-        // Adjusted targetY for Desktop/Android vs Mobile
-        const targetY = isMobile ? -window.innerHeight * 0.22 : -window.innerHeight * 0.38
+        // Pushed docking points down: 0.35 for desktop (~15% from top), 0.05 for mobile (~45% from top)
+        const targetY = isMobile ? -baseH * 0.05 : -baseH * 0.35
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
@@ -88,16 +106,16 @@ onMounted(async () => {
         if (scrollY > landingPoint) {
            yPos = targetY
 
-           // UN-STICK LOGIC: If we've scrolled past the viewing duration,
-           // start moving the title with the character as it scrolls away
-           const unstickPoint = hh + sh - window.innerHeight
+           // UN-STICK LOGIC: Start moving away much sooner to avoid feeling "stuck"
+           const unstickPoint = hh + sh * 0.2 
            if (scrollY > unstickPoint) {
               yPos -= (scrollY - unstickPoint)
            }
            
-           const topThreshold = -window.innerHeight * 0.48
+           // Threshold matches the docking point
+           const topThreshold = targetY - 20
            if (yPos < topThreshold) {
-              topFade = Math.max(0, 1 - (topThreshold - yPos) / 60)
+              topFade = Math.max(0, 1 - (topThreshold - yPos) / 100)
            }
         }
 
@@ -109,18 +127,25 @@ onMounted(async () => {
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
 
-      }
-
-      const exitStart = hh + sh - 600
-      if (scrollY > exitStart) {
-        const exitP = Math.min(1, (scrollY - exitStart) / 400)
-        gsap.set(title, { opacity: 1 - exitP })
+        // Reveal navbar brand ONLY after hero title starts fading/moving away
+        if (navBrand) {
+          const brandRevealP = Math.max(0, Math.min(1, (scrollY - (hh + sh * 0.3)) / 500))
+          gsap.set(navBrand, { opacity: brandRevealP })
+        }
+      } else {
+        if (navBrand) gsap.set(navBrand, { opacity: 0 })
       }
 
       if (globeCanvas) {
         const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh + 200) / 400))
         globeCanvas.style.opacity = 1 - globeFadeP
         globeCanvas.style.pointerEvents = globeFadeP >= 1 ? 'none' : 'none'
+      }
+
+      const exitStart = hh + sh - 600
+      if (scrollY > exitStart) {
+        const exitP = Math.min(1, (scrollY - exitStart) / 400)
+        gsap.set(title, { opacity: 1 - exitP })
       }
     }
   })
@@ -350,6 +375,7 @@ onUnmounted(() => {
         <span class="hero-letter">b</span>
         <span class="hero-letter">a</span>
         <span class="hero-letter">l</span>
+        <span class="hero-letter">&nbsp;</span>
         <span class="hero-letter">G</span>
         <span class="hero-letter">L</span>
         <span class="hero-letter">E</span>
@@ -404,7 +430,7 @@ onUnmounted(() => {
       <h2 class="faq-header" id="faq-head">What this <em>actually</em> does.</h2>
       <div id="faq-list">
         <div class="faq-item">
-          <div class="faq-q">How does GlobalGle process cross-border payments? <span>+</span></div>
+          <div class="faq-q">How does Global Gle process cross-border payments? <span>+</span></div>
           <div class="faq-a">Our platform leverages direct integrations with correspondent banks and local payment schemes, routing transactions through the most efficient path in real time with full auditability.</div>
         </div>
         <div class="faq-item">
@@ -451,7 +477,7 @@ onUnmounted(() => {
                 <div class="footer-logo">Work With Us</div>
                 <p class="footer-desc">
                   Ready to move money the right way?<br>
-                  GlobalGle — built for speed, compliance and scale.
+                  Global Gle — built for speed, compliance and scale.
                 </p>
                 <div class="footer-socials">
                   <a href="https://instagram.com" target="_blank" class="social-cir" aria-label="Instagram">
@@ -476,7 +502,7 @@ onUnmounted(() => {
               <!-- Contact Info -->
               <div class="nav-group">
                 <span class="nav-label">Contact</span>
-                <span class="contact-item">GlobalGle Inc.</span>
+                <span class="contact-item">Global Gle Inc.</span>
                 <a href="mailto:hello@globalgle.com" class="contact-item">hello@globalgle.com</a>
                 <a href="tel:+2348000000000" class="contact-item">+234 800 000 0000</a>
               </div>
@@ -485,7 +511,7 @@ onUnmounted(() => {
 
             <div class="footer-legal">
               <div class="legal-left">
-                <span>© 2026 GlobalGle Inc. All rights reserved.</span>
+                <span>© 2026 Global Gle Inc. All rights reserved.</span>
                 <a href="#">Privacy</a>
                 <a href="#">Terms</a>
               </div>
@@ -521,7 +547,7 @@ html { scroll-behavior: auto; }
   inset: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 100;
+  z-index: 100001; /* Must be above navbar (99999) */
   pointer-events: none;
   overflow: hidden;
   /* Removed flex-centering to prevent capsule distortion */
@@ -529,7 +555,7 @@ html { scroll-behavior: auto; }
 
 #hero-title {
   position: absolute;
-  top: 47%;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 100%;
