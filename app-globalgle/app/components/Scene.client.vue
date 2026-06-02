@@ -100,14 +100,14 @@ onMounted(async () => {
   canvasDiv.value.appendChild(renderer.domElement)
 
   // ── Camera framing ──────────────────────────────────
-  camera = new THREE.PerspectiveCamera(12, w / h, 0.1, 1000)
+  camera = new THREE.PerspectiveCamera(18, w / h, 0.1, 1000)
   
   const updateCamera = () => {
     const { isDesktop: desktopMode } = getDisplayMode()
     if (desktopMode) {
-      // Desktop: Show the workstation/laptop
-      camera.position.set(0, 13.1, 26.5)
-      camera.lookAt(0, 12.0, 0)
+      // Desktop: Show the workstation/laptop, framed to show full body + seat
+      camera.position.set(0, 11.0, 42.0)
+      camera.lookAt(0, 9.5, 0)
     } else {
       // Mobile (iOS etc): Zoom in on character
       camera.position.set(0, 12.0, 35) 
@@ -157,7 +157,7 @@ onMounted(async () => {
       if (!child.isMesh) return
 
       const name = child.name.toLowerCase()
-      // Whitelist for character body parts
+      // Whitelist for character body parts and essential environment
       const isCharacterPart = child.type === 'SkinnedMesh' || 
                               name.includes('body') || name.includes('head') || 
                               name.includes('shirt') || name.includes('pant') || 
@@ -167,7 +167,15 @@ onMounted(async () => {
                               name.includes('male') || name.includes('character') || 
                               name.includes('avatar') || name.includes('jean') ||
                               name.includes('sneaker') || name.includes('hoodie') ||
-                              name.includes('cloth')
+                              name.includes('cloth') || name.includes('leg') ||
+                              name.includes('arm') || name.includes('neck') ||
+                              name.includes('torso') || name.includes('waist') ||
+                              name.includes('hips') || name.includes('thigh') ||
+                              name.includes('shin') || name.includes('shoulder') ||
+                              name.includes('seat') || name.includes('chair') ||
+                              name.includes('stool') || name.includes('desk') ||
+                              name.includes('table') || name.includes('workstation') ||
+                              name.includes('plane')
 
       if (desktopMode) {
         // Desktop / Android: Show full workstation + laptop

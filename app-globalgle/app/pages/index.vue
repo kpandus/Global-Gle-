@@ -529,12 +529,12 @@ html { scroll-behavior: auto; }
 
 #hero-title {
   position: absolute;
-  top: 50%;
+  top: 47%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 100%;
   font-family: 'Urbanist', sans-serif;
-  font-size: clamp(2.2rem, 10vw, 10rem);
+  font-size: clamp(2rem, 5vw, 4.5rem);
   font-weight: 800;
   letter-spacing: 0.05em;
   color: #fff;
