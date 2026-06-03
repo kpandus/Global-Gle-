@@ -50,6 +50,9 @@ onMounted(async () => {
   const globeCanvas = $('#globe-canvas')
   const charModel = $('.character-model')
 
+  const titleAlphaMult = { value: 1 }
+  let timerStarted = false
+
   gsap.set(title, { opacity: 0 })
   gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
 
@@ -77,22 +80,33 @@ onMounted(async () => {
       const appearanceStart = hh * 0.25
       const appearanceEnd = hh * 0.45
 
-      if (scrollY < appearanceEnd) {
-        gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
+      if (scrollY < appearanceStart) {
+        gsap.set(title, { opacity: 0, y: 0 })
         // Reset shifts when not in journey phase
         gsap.set(title, { x: 0 })
         if (charModel) gsap.set(charModel, { x: 0 })
-      } else {
-        gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
-      }
-
-      if (scrollY < appearanceStart) {
-        gsap.set(title, { opacity: 0, y: 0 })
+        
+        // Reset 5s timer
+        timerStarted = false
+        gsap.killTweensOf(titleAlphaMult)
+        titleAlphaMult.value = 1
       } else if (scrollY < appearanceEnd) {
         const revealP = (scrollY - appearanceStart) / (appearanceEnd - appearanceStart)
         gsap.set(title, { opacity: revealP, scale: 1, y: 0, color: '#fff' })
+        gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
       } else {
-        gsap.set(title, { opacity: 1 })
+        gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
+
+        // Desktop only: Start 5s fade-out timer once title is fully appeared
+        if (isDesktopView && !timerStarted) {
+          timerStarted = true
+          gsap.to(titleAlphaMult, { 
+            value: 0, 
+            duration: 1.5, 
+            delay: 5, 
+            ease: "power2.inOut" 
+          })
+        }
       }
 
       if (scrollY >= appearanceEnd) {
@@ -133,7 +147,7 @@ onMounted(async () => {
           y: yPos,
           scale: 1 - (journeyP * (1 - targetScale)),
           color: colorVal,
-          opacity: titleOpacity,
+          opacity: (scrollY < appearanceEnd ? (scrollY - appearanceStart) / (appearanceEnd - appearanceStart) : titleOpacity) * titleAlphaMult.value,
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
 
