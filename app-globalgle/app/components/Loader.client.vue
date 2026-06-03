@@ -97,7 +97,7 @@ watch(() => props.percent, (newVal) => {
   width: 100vw;
   height: 100vh;
   background-color: #e0f2f1;
-  z-index: 9999;
+  z-index: 200000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -108,7 +108,7 @@ watch(() => props.percent, (newVal) => {
   width: 90%;
   max-width: 1400px;
   position: fixed;
-  z-index: 10000;
+  z-index: 200001;
   display: flex;
   justify-content: space-between;
   padding: 20px 0;

@@ -608,7 +608,7 @@ html { scroll-behavior: auto; }
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: clamp(1.5rem, 8vh, 8rem);
+  top: clamp(6.5rem, 13vh, 9rem);
   z-index: 101;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: max-content;
@@ -973,7 +973,6 @@ html { scroll-behavior: auto; }
 
 /* Mobile (≤768px) */
 @media (max-width: 768px) {
-  .hero-btns { bottom: 15%; top: auto; }
   .btn-start, .btn-login { padding: 0.65rem 1.4rem; font-size: 0.88rem; }
 
   #numbers-section { padding: 2rem 1rem; min-height: unset; }
@@ -1001,7 +1000,6 @@ html { scroll-behavior: auto; }
 
 /* Small phones (≤480px) */
 @media (max-width: 480px) {
-  .hero-btns { bottom: 12%; top: auto; }
   .btn-start, .btn-login { padding: 0.55rem 1.1rem; font-size: 0.82rem; }
 
   #numbers-section { padding: 1.5rem 0.5rem; }
