@@ -99,7 +99,7 @@ onMounted(async () => {
           timerStarted = true
           gsap.to(titleAlphaMult, { 
             value: 0, 
-            duration: 1.5, 
+            duration: 0.6, 
             delay: 5, 
             ease: "power2.inOut" 
           })
