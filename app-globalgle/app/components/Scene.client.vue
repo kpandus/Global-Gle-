@@ -273,6 +273,12 @@ onMounted(async () => {
 
       if (character) {
         character.scale.set(scaleVal, scaleVal, scaleVal)
+        
+        // Added cinematic rotation based on reveal progress
+        if (desktopModeNow) {
+          character.rotation.y = easedP * 0.6
+        }
+
         character.traverse(child => {
           if (child.isMesh && child.visible) {
             if (child.material) {

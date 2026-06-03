@@ -48,6 +48,7 @@ onMounted(async () => {
   const title = $('#hero-title')
   const btns = $('.hero-btns')
   const globeCanvas = $('#globe-canvas')
+  const charModel = $('.character-model')
 
   gsap.set(title, { opacity: 0 })
   gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
@@ -78,6 +79,9 @@ onMounted(async () => {
 
       if (scrollY < appearanceEnd) {
         gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
+        // Reset shifts when not in journey phase
+        gsap.set(title, { x: 0 })
+        if (charModel) gsap.set(charModel, { x: 0 })
       } else {
         gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
       }
@@ -98,39 +102,50 @@ onMounted(async () => {
         // Docking: Desktop high (-0.35), Mobile at center (0) as requested (52% height)
         const targetY = isMobile ? 0 : -baseH * 0.35
         const targetScale = isMobile ? 0.35 : 0.3
+        
+        // Side shift: Title right, Character left
+        const titleX = isMobile ? 0 : baseW * 0.22
+        const charX = isMobile ? 0 : -baseW * 0.18
+        
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
         let yPos = journeyP * targetY
-        let topFade = 1
+        let curTitleX = journeyP * titleX
+        let curCharX = journeyP * charX
 
         if (scrollY > landingPoint) {
            yPos = targetY
+           curTitleX = titleX
+           curCharX = charX
+        }
 
-           // UN-STICK LOGIC: Only apply to desktop, as user wants mobile to "stick there"
-           if (!isMobile) {
-             const unstickPoint = hh + sh * 0.2 
-             if (scrollY > unstickPoint) {
-                yPos -= (scrollY - unstickPoint)
-             }
-             
-             const topThreshold = targetY - 20
-             if (yPos < topThreshold) {
-                topFade = Math.max(0, 1 - (topThreshold - yPos) / 100)
-             }
-           }
+        // UN-STICK LOGIC: Once the character scrolls away (end of scene), the text follows it.
+        const unstickPoint = hh + sh
+        let titleOpacity = 1
+        if (scrollY > unstickPoint) {
+           const dist = scrollY - unstickPoint
+           yPos -= dist
+           titleOpacity = Math.max(0, 1 - dist / 400) // Fade out over 400px
         }
 
         gsap.set(title, {
+          x: curTitleX,
           y: yPos,
           scale: 1 - (journeyP * (1 - targetScale)),
           color: colorVal,
-          opacity: topFade,
+          opacity: titleOpacity,
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
 
-        // Reveal navbar brand ONLY after hero title starts fading/moving away
+        if (charModel) {
+          gsap.set(charModel, { x: curCharX })
+        }
+
+
+        // Reveal navbar brand ONLY after hero title is mostly gone (Sequential feel)
         if (navBrand) {
-          const brandRevealP = Math.max(0, Math.min(1, (scrollY - (hh + sh * 0.3)) / 500))
+          const brandRevealStart = unstickPoint + 200 
+          const brandRevealP = Math.max(0, Math.min(1, (scrollY - brandRevealStart) / 500))
           gsap.set(navBrand, { opacity: brandRevealP })
         }
       } else {
@@ -141,12 +156,6 @@ onMounted(async () => {
         const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh + 200) / 400))
         globeCanvas.style.opacity = 1 - globeFadeP
         globeCanvas.style.pointerEvents = globeFadeP >= 1 ? 'none' : 'none'
-      }
-
-      const exitStart = hh + sh - 600
-      if (scrollY > exitStart) {
-        const exitP = Math.min(1, (scrollY - exitStart) / 400)
-        gsap.set(title, { opacity: 1 - exitP })
       }
     }
   })
