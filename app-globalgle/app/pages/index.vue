@@ -93,10 +93,7 @@ onMounted(async () => {
       } else if (scrollY < appearanceEnd) {
         const revealP = (scrollY - appearanceStart) / (appearanceEnd - appearanceStart)
         gsap.set(title, { opacity: revealP, scale: 1, y: 0, color: '#fff' })
-        gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
       } else {
-        gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
-
         // Desktop only: Start 5s fade-out timer once title is fully appeared
         if (isDesktopView && !timerStarted) {
           timerStarted = true
