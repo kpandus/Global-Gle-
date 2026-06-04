@@ -43,7 +43,8 @@ let camera = null
 let mixer = null          // will remain null – animations disabled
 let screenLight = null    // will be hidden
 let mouse = { x: 0, y: 0 }
-const interpolation = { x: 0.18, y: 0.28 }
+let headBone = null
+const interpolation = { x: 0.1, y: 0.2 }
 const cleanupFns = []
 
 function setLighting(scene) {
@@ -211,36 +212,44 @@ onMounted(async () => {
     const handL = character.getObjectByName('handL')
     const handR = character.getObjectByName('handR')
     
-    if (!desktopMode) {
-      // Arms down for character-only mobile view
-      if (armL) armL.rotation.set(-1.57, 0, 0)
-      if (armR) armR.rotation.set(-1.57, 0, 0)
-    }
     if (forearmL) forearmL.rotation.set(0, 0, 0)
     if (forearmR) forearmR.rotation.set(0, 0, 0)
     if (handL) handL.rotation.set(0, 0, 0)
     if (handR) handR.rotation.set(0, 0, 0)
+    // Desktop: arms start down (like mobile), will be restored when workstation arrives
+    if (armL) armL.rotation.set(-1.57, 0, 0)
+    if (armR) armR.rotation.set(-1.57, 0, 0)
 
     scene.add(character)
     character.rotation.y = 0
+    headBone = character.getObjectByName('spine006')
+
+    const onMouseMove = (e) => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
+    }
+    window.addEventListener('mousemove', onMouseMove)
+    cleanupFns.push(() => window.removeEventListener('mousemove', onMouseMove))
 
     mixer = new THREE.AnimationMixer(character)
     const blinkClip = gltf.animations.find(clip => clip.name === 'Blink')
     if (blinkClip) mixer.clipAction(blinkClip).play()
 
+    // Desktop: store typing actions but DON'T play yet — they override arm rotation
+    const typingActions = []
+    let typingStarted = false
     if (desktopMode) {
-      // Desktop / Android: Play typing animations at the laptop
       const introClip = gltf.animations.find(clip => clip.name === 'introAnimation')
       if (introClip) {
         const action = mixer.clipAction(introClip)
         action.clampWhenFinished = true
         action.setLoop(THREE.LoopOnce, 1)
-        action.play()
+        typingActions.push(action)
       }
 
       ['key1', 'key2', 'key5', 'key6', 'typing'].forEach(name => {
         const clip = gltf.animations.find(c => c.name === name)
-        if (clip) mixer.clipAction(clip).play()
+        if (clip) typingActions.push(mixer.clipAction(clip))
       })
     }
 
@@ -253,8 +262,8 @@ onMounted(async () => {
       const heroH = vh * 4.0
       const sceneH = vh * 2.5
       
-      const appearanceStart = heroH * 0.15 
-      const landingPoint = heroH + (sceneH * 0.2)
+      const appearanceStart = heroH * 0.85 
+      const landingPoint = heroH + (sceneH * 0.85)
       
       let p = 0
       if (scrollY < appearanceStart) {
@@ -265,31 +274,115 @@ onMounted(async () => {
         p = (scrollY - appearanceStart) / (landingPoint - appearanceStart)
       }
 
-      const easedP = Math.pow(p, 3)
-      
       const { isDesktop: desktopModeNow } = getDisplayMode()
       const baseScale = desktopModeNow ? 0.4 : 0.45
-      const scaleVal = baseScale + (easedP * (1.0 - baseScale)) 
 
-      if (character) {
-        character.scale.set(scaleVal, scaleVal, scaleVal)
+      if (desktopModeNow) {
+        // Helper: is this mesh a character body part?
+        const isCharMesh = (child) => {
+          const n = child.name.toLowerCase()
+          return child.type === 'SkinnedMesh' ||
+            n.includes('body') || n.includes('head') || n.includes('shirt') ||
+            n.includes('pant') || n.includes('shoe') || n.includes('hair') ||
+            n.includes('skin') || n.includes('eye') || n.includes('hand') ||
+            n.includes('foot') || n.includes('male') || n.includes('character') ||
+            n.includes('avatar') || n.includes('jean') || n.includes('sneaker') ||
+            n.includes('hoodie') || n.includes('cloth') || n.includes('leg') ||
+            n.includes('arm') || n.includes('neck') || n.includes('torso') ||
+            n.includes('waist') || n.includes('hips') || n.includes('thigh') ||
+            n.includes('shin') || n.includes('shoulder')
+        }
+
+        // ── 3-Stage Reveal Logic ───────────────────────────────────
+        // Stage 1: 0.0 -> 0.3 (Fade-in Solo)
+        // Stage 2: 0.3 -> 0.6 (Stay Solo & Centered)
+        // Stage 3: 0.6 -> 1.0 (Transition to Workstation)
         
-        // Added cinematic rotation based on reveal progress
-        if (desktopModeNow) {
-          character.rotation.y = easedP * 0.6
+        let soloOpacity = 0
+        let s3p = 0 // Stage 3 Progress (0 to 1)
+
+        if (p < 0.3) {
+          soloOpacity = Math.pow(p / 0.3, 2)
+          s3p = 0
+        } else if (p < 0.6) {
+          soloOpacity = 1
+          s3p = 0
+        } else {
+          soloOpacity = 1
+          s3p = Math.min(1, (p - 0.6) / 0.4)
+        }
+        // Log progress to console so user can verify script is running
+        if (Math.random() < 0.01) console.log('3-Stage Reveal Progress:', p.toFixed(2), 'Stage 3:', s3p.toFixed(2))
+        const s3e = Math.pow(s3p, 2)
+
+        // ── Dynamic Centering & Framing ─────────────────────────────
+        // Solo (Stages 1 & 2): Close-up and centered
+        // Stage 3: Zoom out dramatically for the workstation
+        const camY = 14.4 - (s3e * 3.4)
+        const camZ = 24.0 + (s3e * 22.0)
+        camera.position.set(0, camY, camZ)
+        
+        const lookY = 15.0 - (s3e * 5.5)
+        camera.lookAt(0, lookY, 0)
+
+        // Character scale: 1.0 when solo, shrinks to 0.85 when workspace appears
+        const currentBaseScale = 1.0 - (s3e * 0.15)
+        const scaleVal = (baseScale + (soloOpacity * (1.0 - baseScale))) * currentBaseScale
+        character.scale.set(scaleVal, scaleVal, scaleVal)
+
+        // Centering: Keep character centered within its container
+        character.position.x = 0
+        character.rotation.y = s3e * 0.6
+
+        // Arms: Ensure they reset on scroll back
+        if (s3p === 0) {
+          if (typingStarted) {
+            typingStarted = false
+            typingActions.forEach(a => a.stop())
+          }
+          if (armL) armL.rotation.set(-1.57, 0, 0)
+          if (armR) armR.rotation.set(-1.57, 0, 0)
+          if (forearmL) forearmL.rotation.set(0, 0, 0)
+          if (forearmR) forearmR.rotation.set(0, 0, 0)
+          if (handL) handL.rotation.set(0, 0, 0)
+          if (handR) handR.rotation.set(0, 0, 0)
+        } else if (!typingStarted) {
+          typingStarted = true
+          typingActions.forEach(a => a.play())
         }
 
         character.traverse(child => {
-          if (child.isMesh && child.visible) {
-            if (child.material) {
+          if (!child.isMesh || !child.material) return
+          
+          if (isCharMesh(child)) {
+            child.visible = true
+            child.material.transparent = true
+            child.material.opacity = soloOpacity
+          } else {
+            // Workstation follows Stage 3 progress
+            child.visible = s3e > 0
+            if (child.visible) {
               child.material.transparent = true
-              child.material.opacity = easedP
+              child.material.opacity = s3e
             }
+          }
+        })
+
+      } else {
+        // Mobile: unchanged — simple unified fade-in
+        const easedP = Math.pow(p, 3)
+        const scaleVal = baseScale + (easedP * (1.0 - baseScale))
+        character.scale.set(scaleVal, scaleVal, scaleVal)
+        character.traverse(child => {
+          if (child.isMesh && child.visible && child.material) {
+            child.material.transparent = true
+            child.material.opacity = easedP
           }
         })
       }
 
       if (rim) {
+        const easedP = Math.pow(p, 3)
         rim.style.opacity = easedP * 0.8
         rim.style.transform = `translate(-50%, -50%) scale(${0.8 + easedP * 0.6})`
       }
@@ -311,6 +404,32 @@ onMounted(async () => {
       animationId = requestAnimationFrame(animateLoop)
       const delta = clock.getDelta()
       if (mixer) mixer.update(delta)
+
+      // ── Head Rotation Behavior ─────────────────────────────
+      if (headBone) {
+        if (window.scrollY < 200) {
+          // Interactive Mode: Look at mouse
+          const maxRotation = Math.PI / 6
+          headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, mouse.x * maxRotation, interpolation.y)
+          
+          const minRotX = -0.3, maxRotX = 0.4
+          let targetX = -mouse.y - 0.5 * maxRotation
+          if (mouse.y > minRotX && mouse.y < maxRotX) {
+            headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, targetX, interpolation.x)
+          } else if (mouse.y >= maxRotX) {
+            headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, -maxRotX - 0.5 * maxRotation, interpolation.x)
+          } else {
+            headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, -minRotX - 0.5 * maxRotation, interpolation.x)
+          }
+        } else {
+          // Focus Mode: Look at screen (when scrolling)
+          if (window.innerWidth > 1024) {
+            headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, -0.4, 0.03)
+            headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, -0.3, 0.03)
+          }
+        }
+      }
+
       renderer.render(scene, camera)
     }
     animateLoop()

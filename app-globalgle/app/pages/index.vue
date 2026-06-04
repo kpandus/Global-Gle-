@@ -115,6 +115,12 @@ onMounted(async () => {
         const targetScale = isMobile ? 0.35 : 0.3
         
         // Side shift: Title right, Character left
+        // Character only shifts once the workstation reveal begins (matches Scene.client.vue Stage 3)
+        const sceneStart = hh * 0.85
+        const sceneEnd = hh + (sh * 0.85)
+        const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
+        const charShiftP = Math.max(0, (sceneP - 0.6) / 0.4)
+        
         const titleX = isMobile ? 0 : baseW * 0.22
         const charX = isMobile ? 0 : -baseW * 0.18
         
@@ -122,13 +128,16 @@ onMounted(async () => {
 
         let yPos = journeyP * targetY
         let curTitleX = journeyP * titleX
-        let curCharX = journeyP * charX
+        let curCharX = charShiftP * charX // Use charShiftP instead of journeyP for the character
 
         if (scrollY > landingPoint) {
            yPos = targetY
            curTitleX = titleX
-           curCharX = charX
+           // curCharX will be handled by charShiftP
         }
+        
+        // Final override for charX after landing point if needed
+        if (scrollY > sceneEnd) curCharX = charX
 
         // UN-STICK LOGIC: Once the character scrolls away (end of scene), the text follows it.
         const unstickPoint = hh + sh
@@ -532,7 +541,7 @@ onUnmounted(() => {
 
             <div class="footer-legal">
               <div class="legal-left">
-                <span>© 2026 Global Gle Inc. All rights reserved.</span>
+                <span>©️ 2026 Global Gle Inc. All rights reserved.</span>
                 <a href="#">Privacy</a>
                 <a href="#">Terms</a>
               </div>
@@ -693,9 +702,8 @@ html { scroll-behavior: auto; }
   -webkit-text-stroke: 1.5px rgba(255,255,255,0.18); 
   opacity: 1; /* Instant presence */
 }
-
-
-#footer-reveal-section {
+/* footer */
+  #footer-reveal-section {
   position: relative;
   width: 100vw;
   height: 140vh;
@@ -970,6 +978,7 @@ html { scroll-behavior: auto; }
 
 /* Mobile (≤768px) */
 @media (max-width: 768px) {
+  .hero-btns { bottom: 15%; top: auto; }
   .btn-start, .btn-login { padding: 0.65rem 1.4rem; font-size: 0.88rem; }
 
   #numbers-section { padding: 2rem 1rem; min-height: unset; }
@@ -997,6 +1006,7 @@ html { scroll-behavior: auto; }
 
 /* Small phones (≤480px) */
 @media (max-width: 480px) {
+  .hero-btns { bottom: 12%; top: auto; }
   .btn-start, .btn-login { padding: 0.55rem 1.1rem; font-size: 0.82rem; }
 
   #numbers-section { padding: 1.5rem 0.5rem; }
@@ -1012,4 +1022,5 @@ html { scroll-behavior: auto; }
   #footer { padding: 3rem 5vw 2.5rem; }
   .footer-tagline { font-size: 0.88rem; }
 }
+
 </style>
