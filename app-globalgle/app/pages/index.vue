@@ -42,16 +42,12 @@ onMounted(async () => {
 
   // ─── ANIMATION CONSTANTS ─────────────────────────────────────────────────
   const getHeroH = () => 4 * baseH
-  const getSceneH = () => 2.5 * baseH
+  const getSceneH = () => 4 * baseH
 
   // ─── HERO & TRAVEL LOGIC ──────────────────────────────────────────────────
   const title = $('#hero-title')
   const btns = $('.hero-btns')
   const globeCanvas = $('#globe-canvas')
-  const charModel = $('.character-model')
-
-  const titleAlphaMult = { value: 1 }
-  let timerStarted = false
 
   gsap.set(title, { opacity: 0 })
   gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
@@ -80,30 +76,19 @@ onMounted(async () => {
       const appearanceStart = hh * 0.25
       const appearanceEnd = hh * 0.45
 
+      if (scrollY < appearanceEnd) {
+        gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
+      } else {
+        gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
+      }
+
       if (scrollY < appearanceStart) {
         gsap.set(title, { opacity: 0, y: 0 })
-        // Reset shifts when not in journey phase
-        gsap.set(title, { x: 0 })
-        if (charModel) gsap.set(charModel, { x: 0 })
-        
-        // Reset 5s timer
-        timerStarted = false
-        gsap.killTweensOf(titleAlphaMult)
-        titleAlphaMult.value = 1
       } else if (scrollY < appearanceEnd) {
         const revealP = (scrollY - appearanceStart) / (appearanceEnd - appearanceStart)
         gsap.set(title, { opacity: revealP, scale: 1, y: 0, color: '#fff' })
       } else {
-        // Desktop only: Start 5s fade-out timer once title is fully appeared
-        if (isDesktopView && !timerStarted) {
-          timerStarted = true
-          gsap.to(titleAlphaMult, { 
-            value: 0, 
-            duration: 0.6, 
-            delay: 5, 
-            ease: "power2.inOut" 
-          })
-        }
+        gsap.set(title, { opacity: 1 })
       }
 
       if (scrollY >= appearanceEnd) {
@@ -113,59 +98,39 @@ onMounted(async () => {
         // Docking: Desktop high (-0.35), Mobile at center (0) as requested (52% height)
         const targetY = isMobile ? 0 : -baseH * 0.35
         const targetScale = isMobile ? 0.35 : 0.3
-        
-        // Side shift: Title right, Character left
-        // Character only shifts once the workstation reveal begins (matches Scene.client.vue Stage 3)
-        const sceneStart = hh * 0.85
-        const sceneEnd = hh + (sh * 0.85)
-        const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
-        const charShiftP = Math.max(0, (sceneP - 0.6) / 0.4)
-        
-        const titleX = isMobile ? 0 : baseW * 0.22
-        const charX = isMobile ? 0 : -baseW * 0.18
-        
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
         let yPos = journeyP * targetY
-        let curTitleX = journeyP * titleX
-        let curCharX = charShiftP * charX // Use charShiftP instead of journeyP for the character
+        let topFade = 1
 
         if (scrollY > landingPoint) {
            yPos = targetY
-           curTitleX = titleX
-           // curCharX will be handled by charShiftP
-        }
-        
-        // Final override for charX after landing point if needed
-        if (scrollY > sceneEnd) curCharX = charX
 
-        // UN-STICK LOGIC: Once the character scrolls away (end of scene), the text follows it.
-        const unstickPoint = hh + sh
-        let titleOpacity = 1
-        if (scrollY > unstickPoint) {
-           const dist = scrollY - unstickPoint
-           yPos -= dist
-           titleOpacity = Math.max(0, 1 - dist / 400) // Fade out over 400px
+           // UN-STICK LOGIC: Only apply to desktop, as user wants mobile to "stick there"
+           if (!isMobile) {
+             const unstickPoint = hh + sh * 0.2 
+             if (scrollY > unstickPoint) {
+                yPos -= (scrollY - unstickPoint)
+             }
+             
+             const topThreshold = targetY - 20
+             if (yPos < topThreshold) {
+                topFade = Math.max(0, 1 - (topThreshold - yPos) / 100)
+             }
+           }
         }
 
         gsap.set(title, {
-          x: curTitleX,
           y: yPos,
           scale: 1 - (journeyP * (1 - targetScale)),
           color: colorVal,
-          opacity: (scrollY < appearanceEnd ? (scrollY - appearanceStart) / (appearanceEnd - appearanceStart) : titleOpacity) * titleAlphaMult.value,
+          opacity: topFade,
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
 
-        if (charModel) {
-          gsap.set(charModel, { x: curCharX })
-        }
-
-
-        // Reveal navbar brand ONLY after hero title is mostly gone (Sequential feel)
+        // Reveal navbar brand ONLY after hero title starts fading/moving away
         if (navBrand) {
-          const brandRevealStart = unstickPoint + 200 
-          const brandRevealP = Math.max(0, Math.min(1, (scrollY - brandRevealStart) / 500))
+          const brandRevealP = Math.max(0, Math.min(1, (scrollY - (hh + sh * 0.3)) / 500))
           gsap.set(navBrand, { opacity: brandRevealP })
         }
       } else {
@@ -176,6 +141,12 @@ onMounted(async () => {
         const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh + 200) / 400))
         globeCanvas.style.opacity = 1 - globeFadeP
         globeCanvas.style.pointerEvents = globeFadeP >= 1 ? 'none' : 'none'
+      }
+
+      const exitStart = hh + sh - 600
+      if (scrollY > exitStart) {
+        const exitP = Math.min(1, (scrollY - exitStart) / 400)
+        gsap.set(title, { opacity: 1 - exitP })
       }
     }
   })
@@ -199,70 +170,140 @@ onMounted(async () => {
     onUpdate(self) {
       const p = self.progress
       
-      // PHASE 1: GLE Wave Jump (0.0 -> 0.2)
+      // PHASE 1: GRAVITY DROOP-DOWN (0.0 -> 0.2)
       if (p < 0.2) {
-        const jumpP = p / 0.2
+        const dropP = p / 0.2
+
         gleWords.forEach((word, i) => {
-          const stagger = i * 0.1
-          const wp = Math.max(0, Math.min(1, (jumpP - stagger) * 2))
+          // Stagger: left first, mid second, right third
+          const delay = i * 0.22
+          const localP = Math.max(0, Math.min(1, (dropP - delay) / (1 - delay)))
+
+          let y, sY, sX, rot, skewX, opacity
+
+          if (localP < 0.55) {
+            // ── FALL: rubber droop-stretch on the way down ──
+            const t = localP / 0.55
+            const accel = t * t * (3 - 2 * t)          // smoothstep accelerate
+            y = -280 + (280 + 42) * accel               // shoots from -280 → +42 (overshoot)
+            sY = 1 + 0.6 * Math.sin(t * Math.PI * 0.85) // vertical stretch (droop)
+            sX = 1 - 0.2 * Math.sin(t * Math.PI * 0.85) // horizontal compress
+            rot = (i - 1) * -20 * (1 - t * t)           // angled fall → straightens
+            skewX = (i === 0 ? 14 : i === 2 ? -14 : 0) * (1 - accel) // outer words lean outward
+            opacity = Math.min(1, t * 3)
+          } else if (localP < 0.74) {
+            // ── IMPACT: hard squash on landing ──
+            const t = (localP - 0.55) / 0.19
+            const sq = Math.sin(t * Math.PI)
+            y = 42 - 42 * t * t                          // slides back from overshoot
+            sY = 1 - 0.45 * sq                           // hard squash
+            sX = 1 + 0.32 * sq                           // splat wide
+            rot = 0; skewX = 0; opacity = 1
+          } else if (localP < 0.88) {
+            // ── REBOUND: smaller spring-back bounce ──
+            const t = (localP - 0.74) / 0.14
+            const b = Math.sin(t * Math.PI) * (1 - t * 0.4)
+            y = -24 * b
+            sY = 1 - 0.15 * b
+            sX = 1 + 0.10 * b
+            rot = 0; skewX = 0; opacity = 1
+          } else {
+            // ── SETTLE: at rest ──
+            y = 0; sY = 1; sX = 1; rot = 0; skewX = 0; opacity = 1
+          }
+
           gsap.set(word, {
-            y: -(Math.sin(wp * Math.PI) * 40), 
-            opacity: 1, // ALWAYS VISIBLE IMMEDIATELY
-            scale: 0.9 + wp * 0.1
+            y, scaleY: sY, scaleX: sX,
+            rotation: rot, skewX, opacity,
+            transformOrigin: 'center top'
           })
         })
-        gsap.set(sideGles, { opacity: 1 })
+
         gsap.set(gleMid, { textContent: 'GLE', color: 'transparent', webkitTextStroke: '1.5px rgba(255,255,255,0.18)' })
         gsap.set(wOverlay, { opacity: 0 })
         gsap.set(footerContent, { opacity: 0 })
       }
 
-      // PHASE 2: Focus & Morph (0.2 -> 0.35)
-      if (p >= 0.2 && p < 0.35) {
-        const morphP = (p - 0.2) / 0.15
-        gsap.set(sideGles, { opacity: 1 - morphP }) 
-        
-        gleMid.textContent = 'W'
-        gsap.set(gleMid, {
-          y: 0,
+      // PHASE 2: W WIREFRAME FORMS — centred via wOverlay (0.20 → 0.44)
+      if (p >= 0.2 && p < 0.44) {
+        const morphP = (p - 0.2) / 0.24  // 0 → 1
+
+        // All GLE words fade out (left first, mid last)
+        gsap.set(sideGles[0], { opacity: Math.max(0, 1 - morphP * 2.8) })
+        if (sideGles[1]) gsap.set(sideGles[1], { opacity: Math.max(0, 1 - Math.max(0, morphP - 0.1) * 2.8) })
+        gsap.set(gleMid, { opacity: Math.max(0, 1 - morphP * 3.5) })
+
+        // wOverlay builds the wireframe W from the centre of the screen
+        const stroke = 2 + morphP * 6
+        gsap.set(wOverlay, {
+          opacity: morphP > 0.05 ? 1 : 0,
+          scale: 0.4 + morphP * 0.82,         // grows: 0.4 → 1.22
           color: 'transparent',
-          webkitTextStroke: '1.5px rgba(255,255,255,0.18)',
-          scale: 1 + morphP * 0.4,
-          opacity: 1
+          webkitTextStroke: `${stroke}px rgba(139, 92, 246, ${Math.min(1, morphP * 1.4)})`,
+          filter: 'none',
+          textShadow: 'none'
         })
-        gsap.set(wOverlay, { opacity: 0 })
+
+        gsap.set(wBloom, { opacity: 0 })
+        gsap.set(footerContent, { opacity: 0 })
       }
 
-      // PHASE 3: Reveal Expansion (0.35 -> 0.85)
-      if (p >= 0.35) {
-        const expandP = Math.min(1, (p - 0.35) / 0.5)
+      // PHASE 3: W FILLS SOLID PURPLE (0.44 → 0.62)
+      if (p >= 0.44 && p < 0.62) {
+        const fillP = (p - 0.44) / 0.18  // 0 → 1
+
         gsap.set(sideGles, { opacity: 0 })
-        gsap.set(gleMid, { opacity: 0 }) 
-        
-        const wScale = 1 + (expandP * 140)
-        const blurVal = expandP * 40
+        gsap.set(gleMid, { opacity: 0 })
 
-        gsap.set(wOverlay, { 
-          opacity: 1, 
-          scale: Math.max(1, wScale * 0.7), 
-          filter: `blur(${blurVal}px)`,
-          webkitTextStroke: '1.5px rgba(255,255,255,0.18)'
+        // wOverlay fills with bold solid purple — scale continues from Phase 2 end (1.22)
+        gsap.set(wOverlay, {
+          opacity: 1,
+          scale: 1.22 + fillP * 0.08,
+          color: `rgba(139, 92, 246, ${fillP})`,
+          webkitTextStroke: `8px rgba(139, 92, 246, 1)`,
+          filter: 'none',
+          textShadow: 'none'
         })
 
-        const bloomP = Math.max(0, (expandP - 0.02) / 0.98)
+        gsap.set(wBloom, { opacity: 0 })
+
+        gsap.set(footerContent, { opacity: 0 })
+      }
+
+      // PHASE 4: W EXPANDS — FOOTER OPENS (0.62 → 1.0)
+      if (p >= 0.62) {
+        const expandP = Math.min(1, (p - 0.62) / 0.38)  // 0 → 1
+        const ease = expandP * expandP * (3 - 2 * expandP)  // smoothstep
+
+        gsap.set(sideGles, { opacity: 0 })
+        gsap.set(gleMid, { opacity: 0 })
+
+        // W expands hard — no blur, clean geometric explosion (starts at 1.30, Phase 3 end)
+        const wScale = 1.30 + ease * 34
+        gsap.set(wOverlay, {
+          opacity: 1,
+          scale: wScale,
+          color: 'rgba(139, 92, 246, 1)',
+          webkitTextStroke: '8px rgba(139, 92, 246, 1)',
+          filter: 'none',
+          textShadow: 'none'
+        })
+
+        // Bloom fades as W fills screen
         gsap.set(wBloom, {
-          scale: 1 + bloomP * 140,
-          opacity: Math.min(1, bloomP * 5),
-          background: 'rgba(255,255,255,0.02)'
+          opacity: Math.max(0, 0.7 - expandP * 2.5),
+          scale: 4.5 + expandP * 10
         })
 
-        gsap.set(footerContent, { 
-          opacity: Math.min(1, expandP * 10), 
-          y: -10 * (1 - Math.min(1, expandP * 10))
+        // Footer rises in cleanly — starts at 28% into expansion
+        const footerRaw = Math.max(0, (expandP - 0.28) / 0.72)
+        const footerEase = footerRaw * footerRaw * (3 - 2 * footerRaw)
+        gsap.set(footerContent, {
+          opacity: footerEase,
+          y: (1 - footerEase) * -25
         })
       }
 
-      // ─── FORCE BLACK BACKGROUND (NO PURPLE) ───
       gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
     },
     onToggle: (self) => {
@@ -456,6 +497,7 @@ onUnmounted(() => {
     </section>
 
     <section id="faq-section">
+      <div class="faq-bg-text" aria-hidden="true">FAQ</div>
       <p class="faq-label" id="faq-label">Questions</p>
       <h2 class="faq-header" id="faq-head">What this <em>actually</em> does.</h2>
       <div id="faq-list">
@@ -463,6 +505,7 @@ onUnmounted(() => {
           <div class="faq-q">How does Global Gle process cross-border payments? <span>+</span></div>
           <div class="faq-a">Our platform leverages direct integrations with correspondent banks and local payment schemes, routing transactions through the most efficient path in real time with full auditability.</div>
         </div>
+        
         <div class="faq-item">
           <div class="faq-q">What currencies and corridors are supported? <span>+</span></div>
           <div class="faq-a">We support 85+ currencies across 120+ countries. Our corridor coverage includes major G20 markets as well as underserved emerging market regions with native local settlement.</div>
@@ -541,7 +584,7 @@ onUnmounted(() => {
 
             <div class="footer-legal">
               <div class="legal-left">
-                <span>©️ 2026 Global Gle Inc. All rights reserved.</span>
+                <span>© 2026 Global Gle Inc. All rights reserved.</span>
                 <a href="#">Privacy</a>
                 <a href="#">Terms</a>
               </div>
@@ -614,7 +657,7 @@ html { scroll-behavior: auto; }
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: clamp(6.5rem, 13vh, 9rem);
+  bottom: clamp(1.5rem, 8vh, 8rem);
   z-index: 101;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: max-content;
@@ -635,7 +678,7 @@ html { scroll-behavior: auto; }
 
 .scene-wrapper {
   width: 100vw;
-  height: 250vh;
+  height: 400vh;
   position: relative;
   z-index: 5;
 }
@@ -671,7 +714,26 @@ html { scroll-behavior: auto; }
 .nl-bot .number-item { font-size: clamp(1.2rem, 5vw, 5rem); color: rgba(0,255,136,0.4); -webkit-text-stroke: 1px rgba(255,255,255,0.15); }
 
 /* FAQ */
-#faq-section { width: 100vw; min-height: 100vh; background: #0a0d14; padding: clamp(3rem, 8vw, 6rem) 5vw; position: relative; z-index: 10; }
+#faq-section { width: 100vw; min-height: 100vh; background: #0a0d14; padding: clamp(3rem, 8vw, 6rem) 5vw; position: relative; z-index: 10; overflow: hidden; }
+.faq-bg-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Urbanist', sans-serif;
+  font-size: clamp(18rem, 40vw, 36rem);
+  font-weight: 900;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.045);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  z-index: 0;
+}
+/* Push all FAQ content above the watermark */
+#faq-section > *:not(.faq-bg-text) { position: relative; z-index: 1; }
 .faq-label { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #00ff88; display: block; text-align: center; }
 .faq-header { font-family: 'Urbanist', sans-serif; font-size: clamp(1.5rem, 5vw, 4rem); font-weight: 800; margin: 1rem auto 2.5rem; max-width: 700px; text-align: center; }
 .faq-item { border: 1px solid #1f1f1f; border-radius: 12px; padding: clamp(1rem, 3vw, 1.8rem); margin-bottom: 0.6rem; background: rgba(255,255,255,0.02); transition: all 0.2s; }
@@ -681,35 +743,41 @@ html { scroll-behavior: auto; }
 .faq-item.open .faq-a { max-height: 250px; padding-top: 1rem; }
 
 /* Unified Reveal CSS */
-.gle-text-wrap { 
-  position: absolute; 
-  top: 25%; /* Mobile default */
-  left: 50%; 
-  transform: translate(-50%, -50%); 
-  display: flex; 
-  gap: clamp(1rem, 5vw, 8rem); 
-  align-items: center; 
+.gle-text-wrap {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: clamp(1rem, 5vw, 8rem);
+  align-items: center;
   z-index: 10;
+  perspective: 900px;
+  overflow: visible;
 }
 @media (min-width: 768px) {
-  .gle-text-wrap { top: 6%; } /* Forced high at the very top */
+  .gle-text-wrap { top: 6%; }
 }
-.gle-word { 
-  font-family: 'Urbanist', sans-serif; 
-  font-size: clamp(2.5rem, 10vw, 11rem); 
-  font-weight: 800; 
-  color: transparent; 
-  -webkit-text-stroke: 1.5px rgba(255,255,255,0.18); 
-  opacity: 1; /* Instant presence */
+.gle-word {
+  display: inline-block;
+  font-family: 'Urbanist', sans-serif;
+  font-size: clamp(2.5rem, 10vw, 11rem);
+  font-weight: 800;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255,255,255,0.18);
+  opacity: 0;
+  will-change: transform, opacity;
+  transform-origin: center top;
 }
-/* footer */
-  #footer-reveal-section {
+
+
+#footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 140vh;
+  height: 220vh;
   background: #000;
-  z-index: 30; 
-  margin-top: 0; 
+  z-index: 30;
+  margin-top: 0;
 }
 
 #footer-sticky-wrap {
@@ -743,17 +811,17 @@ html { scroll-behavior: auto; }
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  transform-origin: 50% 50%;
   z-index: 10;
   font-family: 'Urbanist', sans-serif;
-  font-size: 25vw;
+  font-size: 28vw;
   font-weight: 900;
-  /* Glassy purple — matches the morphed middle GLE */
-  color: rgba(139, 92, 246, 0.15);
-  -webkit-text-stroke: 2px rgba(139, 92, 246, 0.9);
-  text-shadow: 0 0 80px rgba(139, 92, 246, 0.7), 0 0 160px rgba(139, 92, 246, 0.3);
+  color: transparent;
+  -webkit-text-stroke: 8px transparent;
   pointer-events: none;
   opacity: 0;
-  will-change: transform, opacity;
+  will-change: transform, opacity, color;
+  user-select: none;
 }
 
 #footer-content {
@@ -1022,5 +1090,4 @@ html { scroll-behavior: auto; }
   #footer { padding: 3rem 5vw 2.5rem; }
   .footer-tagline { font-size: 0.88rem; }
 }
-
 </style>
