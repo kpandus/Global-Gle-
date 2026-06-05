@@ -567,13 +567,6 @@ onUnmounted(() => {
     <!-- UNIFIED CINEMATIC FOOTER SECTION -->
     <section id="footer-reveal-section">
       <div id="footer-sticky-wrap">
-        
-        <!-- The GLE Words (Merged into this section for smoothness) -->
-        <div class="gle-text-wrap" id="unified-gle-wrap">
-          <span class="gle-word side-gle">GLE</span>
-          <span class="gle-word" id="gle-mid">GLE</span>
-          <span class="gle-word side-gle">GLE</span>
-        </div>
 
         <!-- Purple bloom behind the word -->
         <div id="w-bloom"></div>
