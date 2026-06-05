@@ -256,14 +256,15 @@ onMounted(async () => {
     const clock = new THREE.Clock()
     const rim = canvasDiv.value.querySelector('.character-rim')
     
+    let currentS3P = 0
     const handleReveal = () => {
       const scrollY = window.scrollY
       const vh = window.innerHeight
       const heroH = vh * 4.0
-      const sceneH = vh * 2.5
+      const sceneH = vh * 4.0
       
       const appearanceStart = heroH * 0.85 
-      const landingPoint = heroH + (sceneH * 0.85)
+      const landingPoint = heroH + (sceneH * 0.7)
       
       let p = 0
       if (scrollY < appearanceStart) {
@@ -311,6 +312,7 @@ onMounted(async () => {
           soloOpacity = 1
           s3p = Math.min(1, (p - 0.6) / 0.4)
         }
+        currentS3P = s3p
         // Log progress to console so user can verify script is running
         if (Math.random() < 0.01) console.log('3-Stage Reveal Progress:', p.toFixed(2), 'Stage 3:', s3p.toFixed(2))
         const s3e = Math.pow(s3p, 2)
@@ -408,25 +410,15 @@ onMounted(async () => {
 
       // ── Head Rotation Behavior ─────────────────────────────
       if (headBone) {
-        if (window.scrollY < 200) {
-          // Interactive Mode: Look at mouse
-          const maxRotation = Math.PI / 6
-          headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, mouse.x * maxRotation, interpolation.y)
-          
-          const minRotX = -0.3, maxRotX = 0.4
-          let targetX = -mouse.y - 0.5 * maxRotation
-          if (mouse.y > minRotX && mouse.y < maxRotX) {
-            headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, targetX, interpolation.x)
-          } else if (mouse.y >= maxRotX) {
-            headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, -maxRotX - 0.5 * maxRotation, interpolation.x)
-          } else {
-            headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, -minRotX - 0.5 * maxRotation, interpolation.x)
-          }
+        if (currentS3P < 0.1) {
+          // Solo Mode: Look upright and ahead
+          headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, 0, 0.05)
+          headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, -0.2, 0.05) // Negative to tilt head UP
         } else {
-          // Focus Mode: Look at screen (when scrolling)
+          // Focus Mode: Look at screen when Workstation arrives
           if (window.innerWidth > 1024) {
             headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, -0.4, 0.03)
-            headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, -0.3, 0.03)
+            headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, 0, 0.03) // Straight ahead
           }
         }
       }

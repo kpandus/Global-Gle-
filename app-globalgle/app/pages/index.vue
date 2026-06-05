@@ -52,6 +52,9 @@ onMounted(async () => {
   gsap.set(title, { opacity: 0 })
   gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
 
+  const dockedAlphaMult = { value: 1 }
+  let dockedTimerStarted = false
+
   ScrollTrigger.create({
     trigger: '#hero',
     start: 'top top',
@@ -95,8 +98,9 @@ onMounted(async () => {
         const landingPoint = hh + (sh * 0.2)
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
 
-        // Docking: Desktop down (0.35), Mobile at center (0)
-        const targetY = isMobile ? 0 : baseH * 0.35
+        // Docking: Desktop lower (0.15), Mobile at center (0)
+        // Scrolls DOWN but docks HIGHER than before
+        const targetY = isMobile ? 0 : baseH * 0.15
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
@@ -105,6 +109,17 @@ onMounted(async () => {
 
         if (scrollY > landingPoint) {
            yPos = targetY
+
+           // Dock and disappear logic
+           if (isDesktopView && !dockedTimerStarted) {
+             dockedTimerStarted = true
+             gsap.to(dockedAlphaMult, {
+               value: 0,
+               duration: 0.8,
+               delay: 4,
+               ease: "power2.inOut"
+             })
+           }
 
            // UN-STICK LOGIC: Only apply to desktop, as user wants mobile to "stick there"
            if (!isMobile) {
@@ -118,13 +133,24 @@ onMounted(async () => {
                 topFade = Math.max(0, 1 - (topThreshold - yPos) / 100)
              }
            }
+        } else {
+           // Reset docked timer if scrolling back up
+           dockedTimerStarted = false
+           gsap.killTweensOf(dockedAlphaMult)
+           dockedAlphaMult.value = 1
+        }
+
+        const exitStart = hh + sh - 600
+        let exitAlpha = 1
+        if (scrollY > exitStart) {
+          exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / 400)
         }
 
         gsap.set(title, {
           y: yPos,
           scale: 1 - (journeyP * (1 - targetScale)),
           color: colorVal,
-          opacity: topFade,
+          opacity: topFade * dockedAlphaMult.value * exitAlpha,
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
 
@@ -141,12 +167,6 @@ onMounted(async () => {
         const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh + 200) / 400))
         globeCanvas.style.opacity = 1 - globeFadeP
         globeCanvas.style.pointerEvents = globeFadeP >= 1 ? 'none' : 'none'
-      }
-
-      const exitStart = hh + sh - 600
-      if (scrollY > exitStart) {
-        const exitP = Math.min(1, (scrollY - exitStart) / 400)
-        gsap.set(title, { opacity: 1 - exitP })
       }
     }
   })
