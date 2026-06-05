@@ -40,10 +40,10 @@ let animationId = null
 let scene = new THREE.Scene()
 let camera = null
 let mixer = null          // will remain null – animations disabled
-let screenLight = null    // will be hidden
-let mouse = { x: 0, y: 0 }
 let headBone = null
 let neckBone = null
+let screenLightMesh = null 
+let screenFlickerIntensity = 0
 const interpolation = { x: 0.1, y: 0.2 }
 const cleanupFns = []
 
@@ -61,18 +61,14 @@ function setLighting(scene) {
   directionalLight.castShadow = true;
   scene.add(directionalLight);
 
-  const pointLight = new THREE.PointLight(0x22d3ee, 10, 100, 3); // Restored intensity to 10
+  const pointLight = new THREE.PointLight(0xff00ff, 0, 100, 3); 
   pointLight.position.set(3, 12, 4);
   pointLight.castShadow = true;
   scene.add(pointLight);
 
   return { 
-    setPointLight: (screenLight) => {
-      if (screenLight && screenLight.material.opacity > 0.9) {
-        pointLight.intensity = screenLight.material.emissiveIntensity * 20; // Restored multiplier
-      } else {
-        pointLight.intensity = 0;
-      }
+    setPointLight: (intensity) => {
+      pointLight.intensity = intensity
     }
   }
 }
@@ -183,11 +179,19 @@ onMounted(async () => {
 
       if (desktopMode) {
         // Desktop / Android: Show full workstation + laptop
-        // Hide specific internal artifacts that create unwanted thick light layers
-        if (name.includes('rim') || name.includes('glow') || name.includes('atmosphere') || 
+        if (name.includes('screenlight')) {
+          screenLightMesh = child
+          child.visible = true 
+          if (child.material) {
+            child.material.transparent = true
+            child.material.opacity = 0
+            child.material.emissive = new THREE.Color(0xff00ff)
+            child.material.emissiveIntensity = 0
+          }
+        } else if (name.includes('rim') || name.includes('glow') || name.includes('atmosphere') || 
             name.includes('rays') || name.includes('volume') || name.includes('emissive') ||
-            name.includes('flare') || name.includes('light') || name.includes('beam') || 
-            name.includes('halo') || name.includes('shine')) {
+            name.includes('flare') || (name.includes('light') && !name.includes('screenlight')) || 
+            name.includes('beam') || name.includes('halo') || name.includes('shine')) {
           child.visible = false
         } else {
           child.visible = true
@@ -261,6 +265,12 @@ onMounted(async () => {
 
     const clock = new THREE.Clock()
     
+    // Flicker logic for screen
+    const flickerInterval = setInterval(() => {
+      screenFlickerIntensity = Math.random()
+    }, 200)
+    cleanupFns.push(() => clearInterval(flickerInterval))
+
     const animateLoop = () => {
       animationId = requestAnimationFrame(animateLoop)
       const delta = clock.getDelta()
@@ -374,6 +384,24 @@ onMounted(async () => {
         if (headBone) {
           headBone.rotation.x = -0.2
           headBone.rotation.y = 0
+        }
+
+        // Screen Glow Logic
+        if (screenLightMesh && typeof light.setPointLight === 'function') {
+          if (s3e > 0.98) {
+            screenLightMesh.material.opacity = 1
+            const targetEmissive = screenFlickerIntensity * 8
+            screenLightMesh.material.emissiveIntensity = THREE.MathUtils.lerp(
+              screenLightMesh.material.emissiveIntensity, 
+              targetEmissive, 
+              0.1
+            )
+            light.setPointLight(screenLightMesh.material.emissiveIntensity * 2) 
+          } else {
+            screenLightMesh.material.opacity = 0
+            screenLightMesh.material.emissiveIntensity = 0
+            light.setPointLight(0)
+          }
         }
       } else {
         // Mobile
