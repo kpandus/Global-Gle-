@@ -144,11 +144,6 @@ onMounted(async () => {
           threeScene.value.setScrollProgress(sceneP)
         }
 
-        const charShiftP = Math.max(0, (sceneP - 0.45) / 0.55)
-        const charShiftE = Math.pow(charShiftP, 2)
-        
-        let curCharX = charShiftE * charX
-
         // Persistence logic: Stay for 0.2 screen heights as requested
         const exitStart = sceneEnd + (baseH * 0.2) 
         let exitAlpha = 1
@@ -156,8 +151,9 @@ onMounted(async () => {
           exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.4))
         }
 
-        // Title extension reduced to 1 sec (fade starts at sceneP = 0.35)
-        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.35) / 0.2))
+        // TIGHTER REVEAL SEQUENCE
+        // Title stays slightly longer (fade starts at 0.45 instead of 0.35)
+        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.45) / 0.2))
 
         gsap.set(title, {
           x: 0,
@@ -168,19 +164,25 @@ onMounted(async () => {
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
 
+        // DELAYED STATEMENT: Starts appearing only after Title is gone (sceneP > 0.7)
+        const charShiftP = Math.max(0, (sceneP - 0.7) / 0.3)
+        const charShiftE = Math.pow(charShiftP, 2)
+        
+        const curCharX = charShiftE * charX
+
         const charModel = $('.character-model')
         if (charModel) {
           gsap.set(charModel, { x: curCharX })
         }
 
         if (partnerText) {
-          // Slowed down reveal significantly (to 0.8x speed) for a more deliberate appearance
-          const partnerOpacity = Math.min(1, charShiftP * 0.8) * exitAlpha
+          // Quadratic reveal for smoothness, starting only after the title is gone
+          const partnerOpacity = Math.pow(charShiftP, 2) * exitAlpha
 
           gsap.set(partnerText, { 
             opacity: partnerOpacity, 
             x: 50 * (1 - charShiftP),
-            y: 0, // Stay perfectly fixed
+            y: 0, 
             pointerEvents: (partnerOpacity > 0.5) ? 'all' : 'none'
           })
         }
@@ -195,9 +197,10 @@ onMounted(async () => {
       }
 
       if (globeCanvas) {
-        const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh + 200) / 400))
+        // EXTENDED GLOBE EXIT: Fades out between 45% and 85% of hero height
+        const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh * 0.45) / (hh * 0.4)))
         globeCanvas.style.opacity = 1 - globeFadeP
-        globeCanvas.style.pointerEvents = globeFadeP >= 1 ? 'none' : 'none'
+        globeCanvas.style.pointerEvents = 'none'
       }
     }
   })

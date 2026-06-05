@@ -43,6 +43,7 @@ let mixer = null          // will remain null – animations disabled
 let screenLight = null    // will be hidden
 let mouse = { x: 0, y: 0 }
 let headBone = null
+let neckBone = null
 const interpolation = { x: 0.1, y: 0.2 }
 const cleanupFns = []
 
@@ -246,18 +247,12 @@ onMounted(async () => {
     const blinkClip = gltf.animations.find(clip => clip.name === 'Blink')
     if (blinkClip) mixer.clipAction(blinkClip).play()
 
-    // Desktop: store typing actions but DON'T play yet — they override arm rotation
+    // Desktop: store typing actions but DON'T play yet
     const typingActions = []
     let typingStarted = false
     if (desktopMode) {
-      const introClip = gltf.animations.find(clip => clip.name === 'introAnimation')
-      if (introClip) {
-        const action = mixer.clipAction(introClip)
-        action.clampWhenFinished = true
-        action.setLoop(THREE.LoopOnce, 1)
-        typingActions.push(action)
-      }
-
+      // Disabled introAnimation as it was causing the "bop"
+      // Only using the core typing/idle animations for workstation mode
       ['key1', 'key2', 'key5', 'key6', 'typing'].forEach(name => {
         const clip = gltf.animations.find(c => c.name === name)
         if (clip) typingActions.push(mixer.clipAction(clip))
@@ -270,6 +265,17 @@ onMounted(async () => {
       animationId = requestAnimationFrame(animateLoop)
       const delta = clock.getDelta()
       if (mixer) mixer.update(delta)
+
+      // ── Head & Neck Absolute Stability ─────────────────────────────
+      // We lock both the head (spine006) and neck (spine005) 
+      // after the mixer update to ensure they override all animation data.
+      // Set to 0 for a neutral, upright posture.
+      if (headBone) {
+        headBone.rotation.set(0, 0, 0)
+      }
+      if (neckBone) {
+        neckBone.rotation.set(0, 0, 0)
+      }
 
       const p = targetP // Uses scrubbed value from main page
       const { isDesktop: desktopModeNow } = getDisplayMode()
