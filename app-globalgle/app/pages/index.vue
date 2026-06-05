@@ -104,7 +104,7 @@ onMounted(async () => {
 
         // Docking: Desktop lower (0.02), Mobile at center (0)
         // Scrolls DOWN but docks HIGHER than before
-        const targetY = isMobile ? 0 : baseH * 0.02
+        const targetY = isMobile ? -baseH * 0.02 : -baseH * 0.04
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
