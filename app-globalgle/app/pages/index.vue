@@ -515,8 +515,7 @@ onUnmounted(() => {
         <span class="hero-letter">E</span>
       </h1>
       <div id="partner-text">
-        GLOBAL GLE is a <br>
-        <span class="highlight">GLOBAL BUSINESS PARTNER</span>
+        <WhatIDo />
       </div>
     </div>
 
@@ -714,17 +713,14 @@ html { scroll-behavior: auto; }
 #partner-text {
   position: absolute;
   top: 50%;
-  right: 12%;
+  right: 5%;
   transform: translateY(-50%);
-  font-family: 'Urbanist', sans-serif;
-  font-size: clamp(1.5rem, 3.5vw, 3rem);
-  font-weight: 800;
+  width: 55%;
   color: #fff;
-  line-height: 1.2;
-  text-align: left;
   opacity: 0;
   will-change: transform, opacity;
   z-index: 100;
+  pointer-events: none;
 }
 #partner-text .highlight {
   color: #00ff88;
