@@ -278,8 +278,9 @@ onMounted(async () => {
         gsap.set(sideGles, { opacity: 0 })
         gsap.set(gleMid, { opacity: 0 })
 
-        // W expands hard — no blur, clean geometric explosion (starts at 1.30, Phase 3 end)
-        const wScale = 1.30 + ease * 34
+        // W expands hard — no blur, clean geometric explosion
+        // Increased scale to 120 to ensure it covers the entire screen
+        const wScale = 1.30 + ease * 120
         gsap.set(wOverlay, {
           opacity: 1,
           scale: wScale,
@@ -302,14 +303,22 @@ onMounted(async () => {
           opacity: footerEase,
           y: (1 - footerEase) * -25
         })
-      }
 
-      gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
+        // ─── FORCE BACKGROUND FILL (Fixes the "W Gaps" issue) ───
+        // As the W expands, we fade the container background to the same purple
+        // to fill the negative space inside the letter 'W'.
+        const bgFillP = Math.max(0, (expandP - 0.4) / 0.6)
+        gsap.set(stickyWrap, { backgroundColor: gsap.utils.interpolate('#0a0d14', '#8b5cf6', bgFillP) })
+      } else {
+        // Reset to black when not in expansion phase
+        gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
+      }
     },
     onToggle: (self) => {
-      if (!self.isActive) gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
+      // Only reset if we're not at the very end
+      if (!self.isActive && self.progress < 0.9) gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
     },
-    onLeave: () => gsap.set(stickyWrap, { backgroundColor: '#0a0d14' }),
+    onLeave: () => {}, // Keep the background color as set in onUpdate
     onLeaveBack: () => gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
   })
 
@@ -745,7 +754,7 @@ html { scroll-behavior: auto; }
 /* Unified Reveal CSS */
 .gle-text-wrap {
   position: absolute;
-  top: 25%;
+  top: 55%;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
@@ -756,7 +765,7 @@ html { scroll-behavior: auto; }
   overflow: visible;
 }
 @media (min-width: 768px) {
-  .gle-text-wrap { top: 6%; }
+  .gle-text-wrap { top: 35%; }
 }
 .gle-word {
   display: inline-block;
