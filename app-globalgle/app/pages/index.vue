@@ -98,9 +98,9 @@ onMounted(async () => {
         const landingPoint = hh + (sh * 0.2)
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
 
-        // Docking: Desktop lower (0.15), Mobile at center (0)
+        // Docking: Desktop lower (0.02), Mobile at center (0)
         // Scrolls DOWN but docks HIGHER than before
-        const targetY = isMobile ? 0 : baseH * 0.15
+        const targetY = isMobile ? 0 : baseH * 0.02
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
@@ -116,7 +116,7 @@ onMounted(async () => {
              gsap.to(dockedAlphaMult, {
                value: 0,
                duration: 0.8,
-               delay: 4,
+               delay: 10,
                ease: "power2.inOut"
              })
            }
