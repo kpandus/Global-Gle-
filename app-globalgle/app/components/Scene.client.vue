@@ -319,11 +319,11 @@ onMounted(async () => {
         // Solo (Stages 1 & 2): Close-up and centered
         // Stage 3: Zoom out dramatically for the workstation
         // Shifted character significantly higher by lowering lookY
-        const camY = 15.2 - (s3e * 4.2)
+        const camY = 15.6 - (s3e * 4.6)
         const camZ = 24.0 + (s3e * 22.0)
         camera.position.set(0, camY, camZ)
         
-        const lookY = 13.8 - (s3e * 4.4)
+        const lookY = 14.2 - (s3e * 6.7)
         camera.lookAt(0, lookY, 0)
 
         // Character scale: 1.0 when solo, shrinks to 0.85 when workspace appears
