@@ -349,14 +349,13 @@ onMounted(async () => {
         const camZ = 24.0 + (s3e * 22.0)
         camera.position.set(0, camY, camZ)
         
-        // Stabilized lookY: dropping it less (3.2 instead of 6.7) keeps the head more centered
-        // and prevents the "bop up" effect as the camera tilts down.
-        const lookY = 14.2 - (s3e * 3.2)
+        // Restore lower lookY to focus on the workstation and full body
+        const lookY = 14.2 - (s3e * 6.7)
         camera.lookAt(0, lookY, 0)
 
-        // Character Transform: STABILIZE SCALE TO FIX THE BOP
-        // We no longer shrink him from 1.0 to 0.85 during reveal.
-        const scaleVal = (baseScale + (soloOpacity * (1.0 - baseScale)))
+        // Character Transform: Restore shrinking scale to fit the framing
+        const currentBaseScale = 1.0 - (s3e * 0.15)
+        const scaleVal = (baseScale + (soloOpacity * (1.0 - baseScale))) * currentBaseScale
         character.scale.set(scaleVal, scaleVal, scaleVal)
         character.position.x = 0
         character.rotation.y = s3e * 0.6
@@ -373,20 +372,24 @@ onMounted(async () => {
             n.includes('hoodie') || n.includes('cloth') || n.includes('leg') ||
             n.includes('arm') || n.includes('neck') || n.includes('torso') ||
             n.includes('waist') || n.includes('hips') || n.includes('thigh') ||
-            n.includes('shin') || n.includes('shoulder')
+            n.includes('shin') || n.includes('shoulder') || n.includes('boot') ||
+            n.includes('sole') || n.includes('sock') || n.includes('heel') ||
+            n.includes('bottom') || n.includes('suit')
         }
 
         character.traverse(child => {
           if (!child.isMesh || !child.material) return
           if (isCharMesh(child)) {
             child.visible = true
-            child.material.transparent = true
+            child.material.transparent = soloOpacity < 0.99
             child.material.opacity = soloOpacity
+            if (soloOpacity > 0.99) child.material.depthWrite = true
           } else {
             child.visible = s3e > 0.001
             if (child.visible) {
-              child.material.transparent = true
+              child.material.transparent = s3e < 0.99
               child.material.opacity = s3e
+              if (s3e > 0.99) child.material.depthWrite = true
             }
           }
         })

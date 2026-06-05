@@ -153,8 +153,8 @@ onMounted(async () => {
         
         let curCharX = charShiftE * charX
 
-        // Persistence logic: Delay fade-out until much later (2 screen heights after transition)
-        const exitStart = sceneEnd + (baseH * 2.0) 
+        // Persistence logic: Delay fade-out until much later (3 screen heights after transition)
+        const exitStart = sceneEnd + (baseH * 3.0) 
         let exitAlpha = 1
         if (scrollY > exitStart) {
           exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.5))
