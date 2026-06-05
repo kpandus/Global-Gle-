@@ -298,12 +298,12 @@ onMounted(async () => {
         if (p < 0.25) {
           soloOpacity = Math.pow(p / 0.25, 2)
           s3p = 0
-        } else if (p < 0.45) {
+        } else if (p < 0.6) {
           soloOpacity = 1
           s3p = 0
         } else {
           soloOpacity = 1
-          s3p = Math.min(1, (p - 0.45) / 0.55)
+          s3p = Math.min(1, (p - 0.6) / 0.4)
         }
         
         const s3e = Math.pow(s3p, 2)

@@ -99,21 +99,19 @@ onMounted(async () => {
       }
 
       if (scrollY >= appearanceEnd) {
-        const landingPoint = hh + (sh * 0.2)
+        const landingPoint = hh + (sh * 0.15) 
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
 
         // Docking: Desktop lower (0.02), Mobile at center (0)
-        // Scrolls DOWN but docks HIGHER than before
         const targetY = isMobile ? -baseH * 0.02 : -baseH * 0.04
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
-        let yPos = journeyP * targetY
+        let yPos = (scrollY > landingPoint) ? targetY : journeyP * targetY
+        let curScale = (scrollY > landingPoint) ? targetScale : 1 - (journeyP * (1 - targetScale))
         let topFade = 1
 
         if (scrollY > landingPoint) {
-           yPos = targetY
-
            // Dock and disappear logic
            if (isDesktopView && !dockedTimerStarted) {
              dockedTimerStarted = true
@@ -151,14 +149,17 @@ onMounted(async () => {
           exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.4))
         }
 
-        // TIGHTER REVEAL SEQUENCE
-        // Title stays slightly longer (fade starts at 0.45 instead of 0.35)
-        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.45) / 0.2))
+        // Title stays longer alone, then snaps away quickly as workstation arrives
+        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.6) / 0.05))
+        
+        // Lock position/scale during the fade
+        const activeY = (sceneP > 0.6) ? targetY : yPos
+        const activeScale = (sceneP > 0.6) ? targetScale : curScale
 
         gsap.set(title, {
           x: 0,
-          y: yPos,
-          scale: 1 - (journeyP * (1 - targetScale)),
+          y: activeY,
+          scale: activeScale,
           color: colorVal,
           opacity: topFade * dockedAlphaMult.value * exitAlpha * titleWorkstationFade,
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
