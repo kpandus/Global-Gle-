@@ -60,7 +60,7 @@ function setLighting(scene) {
   directionalLight.castShadow = true;
   scene.add(directionalLight);
 
-  const pointLight = new THREE.PointLight(0x22d3ee, 10, 100, 3);
+  const pointLight = new THREE.PointLight(0x22d3ee, 10, 100, 3); // Restored intensity to 10
   pointLight.position.set(3, 12, 4);
   pointLight.castShadow = true;
   scene.add(pointLight);
@@ -68,7 +68,7 @@ function setLighting(scene) {
   return { 
     setPointLight: (screenLight) => {
       if (screenLight && screenLight.material.opacity > 0.9) {
-        pointLight.intensity = screenLight.material.emissiveIntensity * 20;
+        pointLight.intensity = screenLight.material.emissiveIntensity * 20; // Restored multiplier
       } else {
         pointLight.intensity = 0;
       }
@@ -136,7 +136,7 @@ onMounted(async () => {
     const hdrTexture = await hdrLoader.loadAsync('/models/char_enviorment.hdr')
     const envMap = pmrem.fromEquirectangular(hdrTexture).texture
     scene.environment = envMap
-    scene.environmentIntensity = 0.64
+    scene.environmentIntensity = 0.64 // Restored from 0.1
     hdrTexture.dispose()
     pmrem.dispose()
   } catch (e) {
@@ -182,21 +182,26 @@ onMounted(async () => {
 
       if (desktopMode) {
         // Desktop / Android: Show full workstation + laptop
-        child.visible = true
-        if (child.scale.x === 0) child.scale.set(1, 1, 1)
-        if (child.material) child.material.opacity = 1
+        // Hide specific internal artifacts that create unwanted thick light layers
+        if (name.includes('rim') || name.includes('glow') || name.includes('atmosphere') || 
+            name.includes('rays') || name.includes('volume') || name.includes('emissive') ||
+            name.includes('flare') || name.includes('light') || name.includes('beam') || 
+            name.includes('halo') || name.includes('shine')) {
+          child.visible = false
+        } else {
+          child.visible = true
+          if (child.material) child.material.opacity = 1
+        }
       } else {
         // Mobile (iPhone etc): Hide laptop and workstation
         if (!isCharacterPart) {
           child.visible = false
-          child.scale.set(0, 0, 0)
           if (child.material) {
             child.material.transparent = true
             child.material.opacity = 0
           }
         } else {
           child.visible = true
-          if (child.scale.x === 0) child.scale.set(1, 1, 1)
         }
       }
 
@@ -330,7 +335,7 @@ onMounted(async () => {
             n.includes('waist') || n.includes('hips') || n.includes('thigh') ||
             n.includes('shin') || n.includes('shoulder') || n.includes('boot') ||
             n.includes('sole') || n.includes('sock') || n.includes('heel') ||
-            n.includes('bottom') || n.includes('suit')
+            n.includes('suit')
         }
 
         character.traverse(child => {
@@ -341,11 +346,20 @@ onMounted(async () => {
             child.material.opacity = soloOpacity
             if (soloOpacity > 0.99) child.material.depthWrite = true
           } else {
-            child.visible = s3e > 0.001
-            if (child.visible) {
-              child.material.transparent = s3e < 0.99
-              child.material.opacity = s3e
-              if (s3e > 0.99) child.material.depthWrite = true
+            // Workstation parts: hide artifacts, show rest with progress
+            const n = child.name.toLowerCase()
+            if (n.includes('rim') || n.includes('glow') || n.includes('atmosphere') || 
+                n.includes('rays') || n.includes('volume') || n.includes('emissive') ||
+                n.includes('flare') || n.includes('light') || n.includes('beam') || 
+                n.includes('halo') || n.includes('shine')) {
+              child.visible = false
+            } else {
+              child.visible = s3e > 0.001
+              if (child.visible) {
+                child.material.transparent = s3e < 0.99
+                child.material.opacity = s3e
+                if (s3e > 0.99) child.material.depthWrite = true
+              }
             }
           }
         })

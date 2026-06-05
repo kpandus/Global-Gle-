@@ -79,10 +79,11 @@ onMounted(async () => {
         threeEarth.value.setScrollProgress(globeP)
       }
 
-      const appearanceStart = hh * 0.25
-      const appearanceEnd = hh * 0.45
+      const appearanceStart = hh * 0.2
+      const appearanceEnd = hh * 0.3
+      const btnsEnd = appearanceEnd + baseH // Stay 1 screen height longer
 
-      if (scrollY < appearanceEnd) {
+      if (scrollY < btnsEnd) {
         gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
       } else {
         gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
@@ -133,7 +134,8 @@ onMounted(async () => {
         const titleX = isMobile ? 0 : baseW * 0.22
         const charX = isMobile ? 0 : -baseW * 0.18
         
-        const sceneStart = hh * 0.85
+        // Character entry timing (moved much earlier to 0.45 to follow globe immediately)
+        const sceneStart = hh * 0.45
         const sceneEnd = hh + (sh * 0.7)
         const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
         
@@ -172,7 +174,8 @@ onMounted(async () => {
         }
 
         if (partnerText) {
-          const partnerOpacity = Math.min(1, charShiftP * 4) * exitAlpha
+          // Slowed down reveal significantly (to 0.8x speed) for a more deliberate appearance
+          const partnerOpacity = Math.min(1, charShiftP * 0.8) * exitAlpha
 
           gsap.set(partnerText, { 
             opacity: partnerOpacity, 
@@ -738,7 +741,7 @@ html { scroll-behavior: auto; }
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 7.5rem;
+  top: 16rem;
   z-index: 101;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: max-content;
