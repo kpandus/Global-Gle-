@@ -534,35 +534,7 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <section id="numbers-section">
-      <div class="numbers-screen">
-        <div class="screen-chrome">
-          <span class="chrome-dot"></span>
-          <span class="chrome-dot"></span>
-          <span class="chrome-dot"></span>
-        </div>
-        <div class="number-layer nl-top">
-          <span class="number-item">$2.4B+</span>
-          <span class="number-item">120+</span>
-          <span class="number-item">40+</span>
-          <span class="number-item">24/7</span>
-        </div>
-        <div class="number-layer nl-mid">
-          <span class="number-item">120+</span>
-          <span class="number-item">24/7</span>
-          <span class="number-item">$2.4B+</span>
-        </div>
-        <div class="number-layer nl-bot">
-          <span class="number-item">24/7</span>
-          <span class="number-item">120+</span>
-          <span class="number-item">40+</span>
-          <span class="number-item">$2.4B+</span>
-        </div>
-        <div class="screen-scanlines" aria-hidden="true"></div>
-        <div class="screen-vignette" aria-hidden="true"></div>
-      </div>
-    </section>
-
+   
     <section id="faq-section">
       <div class="faq-bg-text" aria-hidden="true">FAQ</div>
       <p class="faq-label" id="faq-label">Questions</p>
