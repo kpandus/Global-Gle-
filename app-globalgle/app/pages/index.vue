@@ -146,13 +146,31 @@ onMounted(async () => {
           exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / 400)
         }
 
+        const titleX = isMobile ? 0 : baseW * 0.22
+        const charX = isMobile ? 0 : -baseW * 0.18
+        
+        // Character only shifts once the workstation reveal begins (matches Scene.client.vue Stage 3)
+        // Stage 3 now starts at p = 0.45 instead of 0.6
+        const sceneStart = hh * 0.85
+        const sceneEnd = hh + (sh * 0.7)
+        const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
+        const charShiftP = Math.max(0, (sceneP - 0.45) / 0.55)
+        
+        let curCharX = charShiftP * charX
+
         gsap.set(title, {
+          x: 0, // Keep centered
           y: yPos,
           scale: 1 - (journeyP * (1 - targetScale)),
           color: colorVal,
           opacity: topFade * dockedAlphaMult.value * exitAlpha,
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
+
+        const charModel = $('.character-model')
+        if (charModel) {
+          gsap.set(charModel, { x: curCharX })
+        }
 
         // Reveal navbar brand ONLY after hero title starts fading/moving away
         if (navBrand) {

@@ -295,22 +295,22 @@ onMounted(async () => {
         }
 
         // ── 3-Stage Reveal Logic ───────────────────────────────────
-        // Stage 1: 0.0 -> 0.3 (Fade-in Solo)
-        // Stage 2: 0.3 -> 0.6 (Stay Solo & Centered)
-        // Stage 3: 0.6 -> 1.0 (Transition to Workstation)
+        // Stage 1: 0.0 -> 0.25 (Fade-in Solo)
+        // Stage 2: 0.25 -> 0.45 (Stay Solo & Centered) - SHORTENED
+        // Stage 3: 0.45 -> 1.0 (Transition to Workstation)
         
         let soloOpacity = 0
         let s3p = 0 // Stage 3 Progress (0 to 1)
 
-        if (p < 0.3) {
-          soloOpacity = Math.pow(p / 0.3, 2)
+        if (p < 0.25) {
+          soloOpacity = Math.pow(p / 0.25, 2)
           s3p = 0
-        } else if (p < 0.6) {
+        } else if (p < 0.45) {
           soloOpacity = 1
           s3p = 0
         } else {
           soloOpacity = 1
-          s3p = Math.min(1, (p - 0.6) / 0.4)
+          s3p = Math.min(1, (p - 0.45) / 0.55)
         }
         currentS3P = s3p
         // Log progress to console so user can verify script is running
