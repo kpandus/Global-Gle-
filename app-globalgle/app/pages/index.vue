@@ -792,35 +792,6 @@ html { scroll-behavior: auto; }
 .faq-a { max-height: 0; overflow: hidden; transition: all 0.4s ease; color: #6b7280; font-size: clamp(0.85rem, 2vw, 0.95rem); }
 .faq-item.open .faq-a { max-height: 250px; padding-top: 1rem; }
 
-/* Unified Reveal CSS */
-.gle-text-wrap {
-  position: absolute;
-  top: 25%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  gap: clamp(1rem, 5vw, 8rem);
-  align-items: center;
-  z-index: 10;
-  perspective: 900px;
-  overflow: visible;
-}
-@media (min-width: 768px) {
-  .gle-text-wrap { top: 6%; }
-}
-.gle-word {
-  display: inline-block;
-  font-family: 'Urbanist', sans-serif;
-  font-size: clamp(2.5rem, 10vw, 11rem);
-  font-weight: 800;
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgba(255,255,255,0.18);
-  opacity: 0;
-  will-change: transform, opacity;
-  transform-origin: center top;
-}
-
-
 #footer-reveal-section {
   position: relative;
   width: 100vw;
@@ -1186,7 +1157,6 @@ html { scroll-behavior: auto; }
 
   /* W overlay */
   #w-overlay { font-size: 55vw; }
-  .gle-word { font-size: clamp(1.8rem, 8vw, 4rem); }
 }
 
 /* Very small phones (≤360px) */
@@ -1203,6 +1173,6 @@ html { scroll-behavior: auto; }
   .footer-logo { font-size: 1.3rem; }
   .legal-left { font-size: 0.65rem; }
   #w-overlay { font-size: 50vw; }
-  .gle-word { font-size: 1.6rem; }
+  
 }
 </style>
