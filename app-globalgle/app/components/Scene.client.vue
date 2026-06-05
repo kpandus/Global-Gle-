@@ -256,7 +256,9 @@ onMounted(async () => {
     const clock = new THREE.Clock()
     const rim = canvasDiv.value.querySelector('.character-rim')
     
-    let currentS3P = 0
+    let currentS3E = 0
+    let currentSoloOpacity = 0
+
     const handleReveal = () => {
       const scrollY = window.scrollY
       const vh = window.innerHeight
@@ -276,31 +278,10 @@ onMounted(async () => {
       }
 
       const { isDesktop: desktopModeNow } = getDisplayMode()
-      const baseScale = desktopModeNow ? 0.4 : 0.45
 
       if (desktopModeNow) {
-        // Helper: is this mesh a character body part?
-        const isCharMesh = (child) => {
-          const n = child.name.toLowerCase()
-          return child.type === 'SkinnedMesh' ||
-            n.includes('body') || n.includes('head') || n.includes('shirt') ||
-            n.includes('pant') || n.includes('shoe') || n.includes('hair') ||
-            n.includes('skin') || n.includes('eye') || n.includes('hand') ||
-            n.includes('foot') || n.includes('male') || n.includes('character') ||
-            n.includes('avatar') || n.includes('jean') || n.includes('sneaker') ||
-            n.includes('hoodie') || n.includes('cloth') || n.includes('leg') ||
-            n.includes('arm') || n.includes('neck') || n.includes('torso') ||
-            n.includes('waist') || n.includes('hips') || n.includes('thigh') ||
-            n.includes('shin') || n.includes('shoulder')
-        }
-
-        // ── 3-Stage Reveal Logic ───────────────────────────────────
-        // Stage 1: 0.0 -> 0.25 (Fade-in Solo)
-        // Stage 2: 0.25 -> 0.45 (Stay Solo & Centered) - SHORTENED
-        // Stage 3: 0.45 -> 1.0 (Transition to Workstation)
-        
         let soloOpacity = 0
-        let s3p = 0 // Stage 3 Progress (0 to 1)
+        let s3p = 0 
 
         if (p < 0.25) {
           soloOpacity = Math.pow(p / 0.25, 2)
@@ -312,76 +293,25 @@ onMounted(async () => {
           soloOpacity = 1
           s3p = Math.min(1, (p - 0.45) / 0.55)
         }
-        currentS3P = s3p
-        // Log progress to console so user can verify script is running
-        if (Math.random() < 0.01) console.log('3-Stage Reveal Progress:', p.toFixed(2), 'Stage 3:', s3p.toFixed(2))
-        const s3e = Math.pow(s3p, 2)
-
-        // ── Dynamic Centering & Framing ─────────────────────────────
-        // Solo (Stages 1 & 2): Close-up and centered
-        // Stage 3: Zoom out dramatically for the workstation
-        // Shifted character significantly higher by lowering lookY
-        const camY = 15.6 - (s3e * 4.6)
-        const camZ = 24.0 + (s3e * 22.0)
-        camera.position.set(0, camY, camZ)
         
-        const lookY = 14.2 - (s3e * 6.7)
-        camera.lookAt(0, lookY, 0)
+        currentS3E = Math.pow(s3p, 2)
+        currentSoloOpacity = soloOpacity
 
-        // Character scale: 1.0 when solo, shrinks to 0.85 when workspace appears
-        const currentBaseScale = 1.0 - (s3e * 0.15)
-        const scaleVal = (baseScale + (soloOpacity * (1.0 - baseScale))) * currentBaseScale
-        character.scale.set(scaleVal, scaleVal, scaleVal)
-
-        // Centering: Keep character centered within its container
-        character.position.x = 0
-        character.rotation.y = s3e * 0.6
-
-        // Arms: Ensure they reset on scroll back
+        // Arms & Typing Logic
         if (s3p === 0) {
           if (typingStarted) {
             typingStarted = false
             typingActions.forEach(a => a.stop())
+            if (armL) armL.rotation.set(-1.57, 0, 0)
+            if (armR) armR.rotation.set(-1.57, 0, 0)
           }
-          if (armL) armL.rotation.set(-1.57, 0, 0)
-          if (armR) armR.rotation.set(-1.57, 0, 0)
-          if (forearmL) forearmL.rotation.set(0, 0, 0)
-          if (forearmR) forearmR.rotation.set(0, 0, 0)
-          if (handL) handL.rotation.set(0, 0, 0)
-          if (handR) handR.rotation.set(0, 0, 0)
         } else if (!typingStarted) {
           typingStarted = true
-          typingActions.forEach(a => a.play())
+          typingActions.forEach(a => { a.reset(); a.fadeIn(0.4); a.play() })
         }
-
-        character.traverse(child => {
-          if (!child.isMesh || !child.material) return
-          
-          if (isCharMesh(child)) {
-            child.visible = true
-            child.material.transparent = true
-            child.material.opacity = soloOpacity
-          } else {
-            // Workstation follows Stage 3 progress
-            child.visible = s3e > 0
-            if (child.visible) {
-              child.material.transparent = true
-              child.material.opacity = s3e
-            }
-          }
-        })
-
       } else {
-        // Mobile: unchanged — simple unified fade-in
-        const easedP = Math.pow(p, 3)
-        const scaleVal = baseScale + (easedP * (1.0 - baseScale))
-        character.scale.set(scaleVal, scaleVal, scaleVal)
-        character.traverse(child => {
-          if (child.isMesh && child.visible && child.material) {
-            child.material.transparent = true
-            child.material.opacity = easedP
-          }
-        })
+        currentSoloOpacity = Math.pow(p, 3)
+        currentS3E = 0
       }
 
       if (rim) {
@@ -408,19 +338,75 @@ onMounted(async () => {
       const delta = clock.getDelta()
       if (mixer) mixer.update(delta)
 
-      // ── Head Rotation Behavior ─────────────────────────────
-      if (headBone) {
-        if (currentS3P < 0.1) {
-          // Solo Mode: Look upright and ahead
-          headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, 0, 0.05)
-          headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, -0.2, 0.05) // Negative to tilt head UP
-        } else {
-          // Focus Mode: Look at screen when Workstation arrives
-          if (window.innerWidth > 1024) {
-            headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, -0.4, 0.03)
-            headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, 0, 0.03) // Straight ahead
-          }
+      const { isDesktop: desktopModeNow } = getDisplayMode()
+      const baseScale = desktopModeNow ? 0.4 : 0.45
+      const s3e = currentS3E
+      const soloOpacity = currentSoloOpacity
+
+      if (desktopModeNow) {
+        // Camera
+        const camY = 15.6 - (s3e * 4.6)
+        const camZ = 24.0 + (s3e * 22.0)
+        camera.position.set(0, camY, camZ)
+        
+        // Stabilized lookY: dropping it less (3.2 instead of 6.7) keeps the head more centered
+        // and prevents the "bop up" effect as the camera tilts down.
+        const lookY = 14.2 - (s3e * 3.2)
+        camera.lookAt(0, lookY, 0)
+
+        // Character Transform: STABILIZE SCALE TO FIX THE BOP
+        // We no longer shrink him from 1.0 to 0.85 during reveal.
+        const scaleVal = (baseScale + (soloOpacity * (1.0 - baseScale)))
+        character.scale.set(scaleVal, scaleVal, scaleVal)
+        character.position.x = 0
+        character.rotation.y = s3e * 0.6
+
+        // Materials & Visibility
+        const isCharMesh = (child) => {
+          const n = child.name.toLowerCase()
+          return child.type === 'SkinnedMesh' ||
+            n.includes('body') || n.includes('head') || n.includes('shirt') ||
+            n.includes('pant') || n.includes('shoe') || n.includes('hair') ||
+            n.includes('skin') || n.includes('eye') || n.includes('hand') ||
+            n.includes('foot') || n.includes('male') || n.includes('character') ||
+            n.includes('avatar') || n.includes('jean') || n.includes('sneaker') ||
+            n.includes('hoodie') || n.includes('cloth') || n.includes('leg') ||
+            n.includes('arm') || n.includes('neck') || n.includes('torso') ||
+            n.includes('waist') || n.includes('hips') || n.includes('thigh') ||
+            n.includes('shin') || n.includes('shoulder')
         }
+
+        character.traverse(child => {
+          if (!child.isMesh || !child.material) return
+          if (isCharMesh(child)) {
+            child.visible = true
+            child.material.transparent = true
+            child.material.opacity = soloOpacity
+          } else {
+            child.visible = s3e > 0.001
+            if (child.visible) {
+              child.material.transparent = true
+              child.material.opacity = s3e
+            }
+          }
+        })
+
+        // ── Head Rotation Stability ─────────────────────────────
+        if (headBone) {
+          // Locked at -0.2 to prevent downward tilt jitter during transition
+          headBone.rotation.x = -0.2
+          headBone.rotation.y = 0
+        }
+      } else {
+        // Mobile
+        const scaleVal = baseScale + (soloOpacity * (1.0 - baseScale))
+        character.scale.set(scaleVal, scaleVal, scaleVal)
+        character.traverse(child => {
+          if (child.isMesh && child.visible && child.material) {
+            child.material.transparent = true
+            child.material.opacity = soloOpacity
+          }
+        })
       }
 
       renderer.render(scene, camera)

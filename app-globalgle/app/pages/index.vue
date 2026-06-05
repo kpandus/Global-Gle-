@@ -46,10 +46,12 @@ onMounted(async () => {
 
   // ─── HERO & TRAVEL LOGIC ──────────────────────────────────────────────────
   const title = $('#hero-title')
+  const partnerText = $('#partner-text')
   const btns = $('.hero-btns')
   const globeCanvas = $('#globe-canvas')
 
   gsap.set(title, { opacity: 0 })
+  gsap.set(partnerText, { opacity: 0, x: 50 })
   gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
 
   const dockedAlphaMult = { value: 1 }
@@ -140,23 +142,23 @@ onMounted(async () => {
            dockedAlphaMult.value = 1
         }
 
-        const exitStart = hh + sh - 600
-        let exitAlpha = 1
-        if (scrollY > exitStart) {
-          exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / 400)
-        }
-
         const titleX = isMobile ? 0 : baseW * 0.22
         const charX = isMobile ? 0 : -baseW * 0.18
         
-        // Character only shifts once the workstation reveal begins (matches Scene.client.vue Stage 3)
-        // Stage 3 now starts at p = 0.45 instead of 0.6
         const sceneStart = hh * 0.85
         const sceneEnd = hh + (sh * 0.7)
         const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
         const charShiftP = Math.max(0, (sceneP - 0.45) / 0.55)
+        const charShiftE = Math.pow(charShiftP, 2)
         
-        let curCharX = charShiftP * charX
+        let curCharX = charShiftE * charX
+
+        // Persistence logic: Delay fade-out until much later (2 screen heights after transition)
+        const exitStart = sceneEnd + (baseH * 2.0) 
+        let exitAlpha = 1
+        if (scrollY > exitStart) {
+          exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.5))
+        }
 
         gsap.set(title, {
           x: 0, // Keep centered
@@ -170,6 +172,26 @@ onMounted(async () => {
         const charModel = $('.character-model')
         if (charModel) {
           gsap.set(charModel, { x: curCharX })
+        }
+
+        if (partnerText) {
+          // UN-STICK LOGIC: Only start moving UP after character transition is completely done
+          // This keeps it perfectly centered in the viewport for the entire transition
+          const partnerUnstickStart = sceneEnd + (baseH * 0.5)
+          let partnerY = 0
+          if (scrollY > partnerUnstickStart) {
+            partnerY = -(scrollY - partnerUnstickStart)
+          }
+
+          // Make it appear much faster (reaches 100% opacity at 25% of the shift progress)
+          const partnerOpacity = Math.min(1, charShiftP * 4) * exitAlpha
+
+          gsap.set(partnerText, { 
+            opacity: partnerOpacity, 
+            x: 50 * (1 - charShiftP),
+            y: partnerY, 
+            pointerEvents: (partnerOpacity > 0.5) ? 'all' : 'none'
+          })
         }
 
         // Reveal navbar brand ONLY after hero title starts fading/moving away
@@ -498,6 +520,10 @@ onUnmounted(() => {
         <span class="hero-letter">L</span>
         <span class="hero-letter">E</span>
       </h1>
+      <div id="partner-text">
+        GLOBAL GLE is a <br>
+        <span class="highlight">GLOBAL BUSINESS PARTNER</span>
+      </div>
     </div>
 
     <section id="hero">
@@ -509,7 +535,7 @@ onUnmounted(() => {
     <section>
       <div class="scene-wrapper">
         <ClientOnly>
-          <Scene />
+          <Scene ref="threeScene" />
         </ClientOnly>
       </div>
     </section>
@@ -689,6 +715,26 @@ html { scroll-behavior: auto; }
   text-align: center;
   line-height: 1.1;
   padding: 0 5vw;
+}
+
+#partner-text {
+  position: absolute;
+  top: 50%;
+  right: 12%;
+  transform: translateY(-50%);
+  font-family: 'Urbanist', sans-serif;
+  font-size: clamp(1.5rem, 3.5vw, 3rem);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  text-align: left;
+  opacity: 0;
+  will-change: transform, opacity;
+  z-index: 100;
+}
+#partner-text .highlight {
+  color: #00ff88;
+  text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
 }
 
 .hero-btns {
