@@ -1,7 +1,6 @@
 <template>
   <div class="character-container">
     <div class="character-model" ref="canvasDiv">
-      <div class="character-rim"></div>
     </div>
   </div>
 </template>
@@ -46,6 +45,13 @@ let mouse = { x: 0, y: 0 }
 let headBone = null
 const interpolation = { x: 0.1, y: 0.2 }
 const cleanupFns = []
+
+let targetP = 0
+defineExpose({
+  setScrollProgress: (p) => {
+    targetP = p
+  }
+})
 
 function setLighting(scene) {
   const directionalLight = new THREE.DirectionalLight(0x5eead4, 0);
@@ -254,30 +260,15 @@ onMounted(async () => {
     }
 
     const clock = new THREE.Clock()
-    const rim = canvasDiv.value.querySelector('.character-rim')
     
-    let currentS3E = 0
-    let currentSoloOpacity = 0
+    const animateLoop = () => {
+      animationId = requestAnimationFrame(animateLoop)
+      const delta = clock.getDelta()
+      if (mixer) mixer.update(delta)
 
-    const handleReveal = () => {
-      const scrollY = window.scrollY
-      const vh = window.innerHeight
-      const heroH = vh * 4.0
-      const sceneH = vh * 4.0
-      
-      const appearanceStart = heroH * 0.85 
-      const landingPoint = heroH + (sceneH * 0.7)
-      
-      let p = 0
-      if (scrollY < appearanceStart) {
-        p = 0
-      } else if (scrollY > landingPoint) {
-        p = 1
-      } else {
-        p = (scrollY - appearanceStart) / (landingPoint - appearanceStart)
-      }
-
+      const p = targetP // Uses scrubbed value from main page
       const { isDesktop: desktopModeNow } = getDisplayMode()
+      const baseScale = desktopModeNow ? 0.4 : 0.45
 
       if (desktopModeNow) {
         let soloOpacity = 0
@@ -294,8 +285,7 @@ onMounted(async () => {
           s3p = Math.min(1, (p - 0.45) / 0.55)
         }
         
-        currentS3E = Math.pow(s3p, 2)
-        currentSoloOpacity = soloOpacity
+        const s3e = Math.pow(s3p, 2)
 
         // Arms & Typing Logic
         if (s3p === 0) {
@@ -309,47 +299,13 @@ onMounted(async () => {
           typingStarted = true
           typingActions.forEach(a => { a.reset(); a.fadeIn(0.4); a.play() })
         }
-      } else {
-        currentSoloOpacity = Math.pow(p, 3)
-        currentS3E = 0
-      }
 
-      if (rim) {
-        const easedP = Math.pow(p, 3)
-        rim.style.opacity = easedP * 0.8
-        rim.style.transform = `translate(-50%, -50%) scale(${0.8 + easedP * 0.6})`
-      }
-    }
-    
-    window.addEventListener('scroll', handleReveal, { passive: true })
-    handleReveal() 
-
-    const onResize = () => {
-      const nW = window.innerWidth
-      const nH = window.innerHeight
-      renderer.setSize(nW, nH)
-      updateCamera()
-    }
-    window.addEventListener('resize', onResize)
-    cleanupFns.push(() => window.removeEventListener('resize', onResize))
-
-    const animateLoop = () => {
-      animationId = requestAnimationFrame(animateLoop)
-      const delta = clock.getDelta()
-      if (mixer) mixer.update(delta)
-
-      const { isDesktop: desktopModeNow } = getDisplayMode()
-      const baseScale = desktopModeNow ? 0.4 : 0.45
-      const s3e = currentS3E
-      const soloOpacity = currentSoloOpacity
-
-      if (desktopModeNow) {
         // Camera
         const camY = 15.6 - (s3e * 4.6)
         const camZ = 24.0 + (s3e * 22.0)
         camera.position.set(0, camY, camZ)
         
-        // Restore lower lookY to focus on the workstation and full body
+        // Restore lower lookY to focus on the workstation and full body (shoes)
         const lookY = 14.2 - (s3e * 6.7)
         camera.lookAt(0, lookY, 0)
 
@@ -396,18 +352,18 @@ onMounted(async () => {
 
         // ── Head Rotation Stability ─────────────────────────────
         if (headBone) {
-          // Locked at -0.2 to prevent downward tilt jitter during transition
           headBone.rotation.x = -0.2
           headBone.rotation.y = 0
         }
       } else {
         // Mobile
-        const scaleVal = baseScale + (soloOpacity * (1.0 - baseScale))
+        const easedP = Math.pow(p, 3)
+        const scaleVal = baseScale + (easedP * (1.0 - baseScale))
         character.scale.set(scaleVal, scaleVal, scaleVal)
         character.traverse(child => {
           if (child.isMesh && child.visible && child.material) {
             child.material.transparent = true
-            child.material.opacity = soloOpacity
+            child.material.opacity = easedP
           }
         })
       }
@@ -456,21 +412,5 @@ onUnmounted(() => {
   height: 100%;
   overflow: hidden;
   isolation: isolate;
-}
-
-.character-rim {
-  position: absolute;
-  width: 252px;
-  height: 252px;
-  z-index: 1;
-  background-color: #22d3ee;
-  box-shadow: inset 66px 35px 85px 0px rgba(0, 180, 180, 0.65);
-  filter: blur(60px);
-  border-radius: 50%;
-  top: 55%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.8);
-  opacity: 0;
-  pointer-events: none;
 }
 </style>

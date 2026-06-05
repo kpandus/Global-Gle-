@@ -4,6 +4,7 @@ import Earth from '~/components/Earth.client.vue'
 import Scene from '~/components/Scene.client.vue'
 
 const threeEarth = ref(null)
+const threeScene = ref(null)
 let cleanupFns = []
 
 onMounted(async () => {
@@ -122,19 +123,6 @@ onMounted(async () => {
                ease: "power2.inOut"
              })
            }
-
-           // UN-STICK LOGIC: Only apply to desktop, as user wants mobile to "stick there"
-           if (!isMobile) {
-             const unstickPoint = hh + sh * 0.2 
-             if (scrollY > unstickPoint) {
-                yPos -= (scrollY - unstickPoint)
-             }
-             
-             const topThreshold = targetY - 20
-             if (yPos < topThreshold) {
-                topFade = Math.max(0, 1 - (topThreshold - yPos) / 100)
-             }
-           }
         } else {
            // Reset docked timer if scrolling back up
            dockedTimerStarted = false
@@ -148,24 +136,33 @@ onMounted(async () => {
         const sceneStart = hh * 0.85
         const sceneEnd = hh + (sh * 0.7)
         const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
+        
+        // Pass the pre-smoothed (scrubbed) progress to the 3D scene
+        if (threeScene.value?.setScrollProgress) {
+          threeScene.value.setScrollProgress(sceneP)
+        }
+
         const charShiftP = Math.max(0, (sceneP - 0.45) / 0.55)
         const charShiftE = Math.pow(charShiftP, 2)
         
         let curCharX = charShiftE * charX
 
-        // Persistence logic: Delay fade-out until much later (3 screen heights after transition)
-        const exitStart = sceneEnd + (baseH * 3.0) 
+        // Persistence logic: Stay for 0.2 screen heights as requested
+        const exitStart = sceneEnd + (baseH * 0.2) 
         let exitAlpha = 1
         if (scrollY > exitStart) {
-          exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.5))
+          exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.4))
         }
 
+        // Title extension reduced to 1 sec (fade starts at sceneP = 0.35)
+        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.35) / 0.2))
+
         gsap.set(title, {
-          x: 0, // Keep centered
+          x: 0,
           y: yPos,
           scale: 1 - (journeyP * (1 - targetScale)),
           color: colorVal,
-          opacity: topFade * dockedAlphaMult.value * exitAlpha,
+          opacity: topFade * dockedAlphaMult.value * exitAlpha * titleWorkstationFade,
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
 
@@ -175,21 +172,12 @@ onMounted(async () => {
         }
 
         if (partnerText) {
-          // UN-STICK LOGIC: Only start moving UP after character transition is completely done
-          // This keeps it perfectly centered in the viewport for the entire transition
-          const partnerUnstickStart = sceneEnd + (baseH * 0.5)
-          let partnerY = 0
-          if (scrollY > partnerUnstickStart) {
-            partnerY = -(scrollY - partnerUnstickStart)
-          }
-
-          // Make it appear much faster (reaches 100% opacity at 25% of the shift progress)
           const partnerOpacity = Math.min(1, charShiftP * 4) * exitAlpha
 
           gsap.set(partnerText, { 
             opacity: partnerOpacity, 
             x: 50 * (1 - charShiftP),
-            y: partnerY, 
+            y: 0, // Stay perfectly fixed
             pointerEvents: (partnerOpacity > 0.5) ? 'all' : 'none'
           })
         }
