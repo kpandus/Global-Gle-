@@ -102,8 +102,8 @@ onMounted(async () => {
         const landingPoint = hh + (sh * 0.15) 
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
 
-        // Docking: Desktop lower (0.02), Mobile at center (0)
-        const targetY = isMobile ? -baseH * 0.02 : -baseH * 0.04
+        // Docking: Slightly below center before exit
+        const targetY = baseH * 0.02
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
@@ -149,11 +149,11 @@ onMounted(async () => {
           exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.4))
         }
 
-        // Title stays longer alone, then snaps away quickly as workstation arrives
-        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.6) / 0.05))
+        // Title stays longer alone, then snaps away quickly while Drifting UP
+        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.6) / 0.06))
         
-        // Lock position/scale during the fade
-        const activeY = (sceneP > 0.6) ? targetY : yPos
+        // Lower dock (targetY), then drift up as opacity drops
+        const activeY = (sceneP > 0.6) ? targetY - (1 - titleWorkstationFade) * baseH * 0.12 : yPos
         const activeScale = (sceneP > 0.6) ? targetScale : curScale
 
         gsap.set(title, {
