@@ -795,8 +795,8 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 220vh;
-  background: #000;
+  height: 120vh;
+  background: red;
   z-index: 30;
   margin-top: 0;
 }
