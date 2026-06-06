@@ -295,7 +295,7 @@ onMounted(async () => {
           opacity: morphP > 0.05 ? 1 : 0,
           scale: 0.4 + morphP * 0.82,         // grows: 0.4 → 1.22
           color: 'transparent',
-          webkitTextStroke: `${stroke}px rgba(0, 255, 136, ${Math.min(1, morphP * 1.4)})`,
+          webkitTextStroke: `${stroke}px rgba(139, 92, 246, ${Math.min(1, morphP * 1.4)})`,
           filter: 'none',
           textShadow: 'none'
         })
@@ -311,12 +311,12 @@ onMounted(async () => {
         gsap.set(sideGles, { opacity: 0 })
         gsap.set(gleMid, { opacity: 0 })
 
-        // wOverlay fills with bold solid green — scale continues from Phase 2 end (1.22)
+        // wOverlay fills with bold solid purple — scale continues from Phase 2 end (1.22)
         gsap.set(wOverlay, {
           opacity: 1,
           scale: 1.22 + fillP * 0.08,
-          color: `rgba(0, 255, 136, ${fillP})`,
-          webkitTextStroke: `8px rgba(0, 255, 136, 1)`,
+          color: `rgba(139, 92, 246, ${fillP})`,
+          webkitTextStroke: `8px rgba(139, 92, 246, 1)`,
           filter: 'none',
           textShadow: 'none'
         })
@@ -340,8 +340,8 @@ onMounted(async () => {
         gsap.set(wOverlay, {
           opacity: 1,
           scale: wScale,
-          color: 'rgba(0, 255, 136, 1)',
-          webkitTextStroke: '8px rgba(0, 255, 136, 1)',
+          color: 'rgba(139, 92, 246, 1)',
+          webkitTextStroke: '8px rgba(139, 92, 246, 1)',
           filter: 'none',
           textShadow: 'none'
         })
@@ -360,10 +360,11 @@ onMounted(async () => {
           y: (1 - footerEase) * -25
         })
 
-        // As the W expands, we fade the container background to a deep forest green
-        // This ensures the white footer text remains perfectly readable.
+        // ─── FORCE BACKGROUND FILL (Fixes the "W Gaps" issue) ───
+        // As the W expands, we fade the container background to the same purple
+        // to fill the negative space inside the letter 'W'.
         const bgFillP = Math.max(0, (expandP - 0.4) / 0.6)
-        gsap.set(stickyWrap, { backgroundColor: gsap.utils.interpolate('#0a0d14', '#002211', bgFillP) })
+        gsap.set(stickyWrap, { backgroundColor: gsap.utils.interpolate('#0a0d14', '#8b5cf6', bgFillP) })
       } else {
         // Reset to black when not in expansion phase
         gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
@@ -534,8 +535,36 @@ onUnmounted(() => {
       </div>
     </section>
 
-   
-   <section id="faq-section">
+    <section id="numbers-section">
+      <div class="numbers-screen">
+        <div class="screen-chrome">
+          <span class="chrome-dot"></span>
+          <span class="chrome-dot"></span>
+          <span class="chrome-dot"></span>
+        </div>
+        <div class="number-layer nl-top">
+          <span class="number-item">$2.4B+</span>
+          <span class="number-item">120+</span>
+          <span class="number-item">40+</span>
+          <span class="number-item">24/7</span>
+        </div>
+        <div class="number-layer nl-mid">
+          <span class="number-item">120+</span>
+          <span class="number-item">24/7</span>
+          <span class="number-item">$2.4B+</span>
+        </div>
+        <div class="number-layer nl-bot">
+          <span class="number-item">24/7</span>
+          <span class="number-item">120+</span>
+          <span class="number-item">40+</span>
+          <span class="number-item">$2.4B+</span>
+        </div>
+        <div class="screen-scanlines" aria-hidden="true"></div>
+        <div class="screen-vignette" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section id="faq-section">
       <div class="faq-bg-text" aria-hidden="true">FAQ</div>
       <p class="faq-label" id="faq-label">Questions</p>
       <h2 class="faq-header" id="faq-head">What this <em>actually</em> does.</h2>
@@ -567,6 +596,13 @@ onUnmounted(() => {
     <!-- UNIFIED CINEMATIC FOOTER SECTION -->
     <section id="footer-reveal-section">
       <div id="footer-sticky-wrap">
+        
+        <!-- The GLE Words (Merged into this section for smoothness) -->
+        <div class="gle-text-wrap" id="unified-gle-wrap">
+          <span class="gle-word side-gle">GLE</span>
+          <span class="gle-word" id="gle-mid">GLE</span>
+          <span class="gle-word side-gle">GLE</span>
+        </div>
 
         <!-- Purple bloom behind the word -->
         <div id="w-bloom"></div>
@@ -766,14 +802,14 @@ html { scroll-behavior: auto; }
 #faq-section { width: 100vw; min-height: 100vh; background: #0a0d14; padding: clamp(3rem, 8vw, 6rem) 5vw; position: relative; z-index: 10; overflow: hidden; }
 .faq-bg-text {
   position: absolute;
-  top: 58%;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   font-family: 'Urbanist', sans-serif;
-  font-size: clamp(10rem, 22vw, 20rem);
+  font-size: clamp(18rem, 40vw, 36rem);
   font-weight: 900;
   color: transparent;
-  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.10);
+  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.045);
   letter-spacing: -0.04em;
   line-height: 1;
   pointer-events: none;
@@ -785,18 +821,46 @@ html { scroll-behavior: auto; }
 #faq-section > *:not(.faq-bg-text) { position: relative; z-index: 1; }
 .faq-label { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #00ff88; display: block; text-align: center; }
 .faq-header { font-family: 'Urbanist', sans-serif; font-size: clamp(1.5rem, 5vw, 4rem); font-weight: 800; margin: 1rem auto 2.5rem; max-width: 700px; text-align: center; }
-#faq-list { max-width: 780px; margin: 0 auto; }
 .faq-item { border: 1px solid #1f1f1f; border-radius: 12px; padding: clamp(1rem, 3vw, 1.8rem); margin-bottom: 0.6rem; background: rgba(255,255,255,0.02); transition: all 0.2s; }
 .faq-item.open { border-color: rgba(0,255,136,0.35); background: rgba(0,255,136,0.04); }
 .faq-q { display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: clamp(0.9rem, 2vw, 1.05rem); font-weight: 500; gap: 1rem; }
 .faq-a { max-height: 0; overflow: hidden; transition: all 0.4s ease; color: #6b7280; font-size: clamp(0.85rem, 2vw, 0.95rem); }
 .faq-item.open .faq-a { max-height: 250px; padding-top: 1rem; }
 
+/* Unified Reveal CSS */
+.gle-text-wrap {
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: clamp(1rem, 5vw, 8rem);
+  align-items: center;
+  z-index: 10;
+  perspective: 900px;
+  overflow: visible;
+}
+@media (min-width: 768px) {
+  .gle-text-wrap { top: 35%; }
+}
+.gle-word {
+  display: inline-block;
+  font-family: 'Urbanist', sans-serif;
+  font-size: clamp(2.5rem, 10vw, 11rem);
+  font-weight: 800;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255,255,255,0.18);
+  opacity: 0;
+  will-change: transform, opacity;
+  transform-origin: center top;
+}
+
+
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 120vh;
-  background: red;
+  height: 220vh;
+  background: #000;
   z-index: 30;
   margin-top: 0;
 }
@@ -813,8 +877,8 @@ html { scroll-behavior: auto; }
 
 #w-bloom {
   position: absolute;
-  top: 10%;
-  left: 10%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
   width: 25vw;
   height: 25vw;
@@ -852,11 +916,11 @@ html { scroll-behavior: auto; }
   width: 100%;
   height: 100vh;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   opacity: 0;
   z-index: 200;
-  padding: clamp(2rem, 5vw, 4rem) 6vw clamp(1.5rem, 3vw, 2.5rem);
+  padding: clamp(2rem, 5vw, 4rem) 6vw;
 }
 
 #footer {
@@ -874,7 +938,7 @@ html { scroll-behavior: auto; }
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-.footer-brand { flex: 1 1 260px; min-width: min(100%, 260px); }
+.footer-brand { flex: 1; min-width: min(100%, 280px); }
 
 .footer-logo {
   font-size: clamp(1.8rem, 4vw, 2.4rem);
@@ -884,9 +948,8 @@ html { scroll-behavior: auto; }
 }
 
 .footer-desc {
-  color: rgba(255,255,255,0.95);
+  color: rgba(255,255,255,0.5);
   line-height: 1.6;
-  font-weight: 600;
   font-size: clamp(0.9rem, 1.5vw, 1.05rem);
   margin-bottom: 2.2rem;
   max-width: 240px;
@@ -910,9 +973,8 @@ html { scroll-behavior: auto; }
 .social-cir svg { width: 18px; height: 18px; display: block; }
 
 .contact-item {
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.5);
   text-decoration: none;
-  font-weight: 600;
   font-size: clamp(0.85rem, 1.5vw, 0.95rem);
   transition: color 0.2s;
   display: block;
@@ -931,9 +993,8 @@ html { scroll-behavior: auto; }
   margin-bottom: 0.5rem;
 }
 .nav-group a {
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.45);
   text-decoration: none;
-  font-weight: 600;
   font-size: clamp(0.85rem, 1.5vw, 1rem);
   transition: 0.2s;
 }
@@ -973,13 +1034,11 @@ html { scroll-behavior: auto; }
 
 .footer-legal {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
   padding-top: 2.5rem;
 }
-.legal-left { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; align-items: center; font-size: 0.85rem; color: rgba(255,255,255,0.3); }
+.legal-left { display: flex; gap: 2rem; align-items: center; font-size: 0.85rem; color: rgba(255,255,255,0.3); }
 .legal-left a { color: inherit; text-decoration: none; transition: 0.2s; }
 .legal-left a:hover { color: rgba(255,255,255,0.6); }
 
@@ -999,9 +1058,8 @@ html { scroll-behavior: auto; }
 }
 
 .footer-col2 nav a {
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.6);
   text-decoration: none;
-  font-weight: 600;
   font-size: 0.95rem;
   transition: color 0.2s;
 }
@@ -1055,128 +1113,64 @@ html { scroll-behavior: auto; }
 
 /* ── RESPONSIVE ───────────────────────────────────────────────────────────── */
 
-/* Wide desktop (≤1200px) */
-@media (max-width: 1200px) {
-  .footer-top { gap: 2.5rem; }
-  .nav-group { min-width: 120px; }
-  #footer-content { padding: clamp(2rem, 4vw, 3.5rem) 5vw clamp(1.2rem, 2.5vw, 2rem); }
-}
-
 /* Tablet (≤1024px) */
 @media (max-width: 1024px) {
-  /* FAQ */
+  #numbers-section { padding: 3rem 2rem; }
+  .numbers-screen { padding: 3rem 2rem 2rem; }
+  .number-layer { gap: 2.5rem; }
+
   #faq-section { padding: 5rem 7vw; }
-  #faq-list { max-width: 680px; }
 
-  /* Footer top — brand takes full row, nav groups sit side-by-side below */
-  .footer-top { gap: 2rem; padding-bottom: 2.5rem; }
-  .footer-brand { min-width: 100%; }
-  .footer-desc { max-width: 100%; }
-  .nav-group { flex: 1; min-width: 130px; }
-
-  /* Footer legal */
-  .footer-legal { padding-top: 2rem; }
+  #footer {
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    padding: 4rem 5vw 3rem;
+  }
+  .footer-col1 { grid-column: 1 / -1; }
 }
 
 /* Mobile (≤768px) */
 @media (max-width: 768px) {
-  /* Hero */
-  #hero-title { font-size: clamp(1.9rem, 7vw, 3.2rem); padding: 0 4vw; }
-  .hero-btns { bottom: 14%; }
   .btn-start, .btn-login { padding: 0.65rem 1.4rem; font-size: 0.88rem; }
 
-  /* FAQ */
+  #numbers-section { padding: 2rem 1rem; min-height: unset; }
+  .numbers-screen { min-height: unset; padding: 2.5rem 1.25rem 1.5rem; }
+  .number-layer { gap: 1.5rem; margin: 1rem 0; }
+  .nl-mid .number-item { font-size: clamp(3rem, 10vw, 7rem); }
+  .nl-top .number-item { font-size: clamp(2rem, 6vw, 4rem); }
+  .nl-bot .number-item { font-size: clamp(1.8rem, 5vw, 3.5rem); }
+
   #faq-section { padding: 4rem 5vw; }
-  .faq-header { font-size: clamp(1.5rem, 6vw, 2.8rem); margin-bottom: 2rem; }
-  .faq-q { font-size: 0.93rem; }
-  #faq-list { max-width: 100%; }
-  .faq-bg-text { font-size: clamp(8rem, 38vw, 14rem); top: 55%; }
+  .faq-header { font-size: clamp(1.6rem, 6vw, 3rem); }
+  .faq-q { font-size: 0.95rem; }
 
-  /* Footer top — full column stack */
-  .footer-top {
-    flex-direction: column;
-    gap: 1.8rem;
-    padding-bottom: 2rem;
-  }
-  .footer-brand { min-width: 100%; }
-  .footer-desc { max-width: 100%; font-size: 0.92rem; margin-bottom: 1.4rem; }
-  .nav-group { min-width: unset; flex: 1; gap: 0.75rem; }
-  .footer-logo { font-size: 1.8rem; margin-bottom: 0.9rem; }
+  #gle-section { min-height: 60vh; }
 
-  /* Footer nav groups — row layout so Quick Links & Contact sit side by side */
-  .footer-top .nav-group:not(.footer-brand) {
-    flex-direction: column;
+  #footer {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    padding: 3.5rem 6vw 3rem;
+    min-height: unset;
   }
-  .footer-top > :is(.nav-group) { flex-basis: 45%; }
-
-  /* Footer legal — stack vertically on mobile */
-  .footer-legal {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding-top: 1.5rem;
-  }
-  .legal-left {
-    flex-wrap: wrap;
-    gap: 0.6rem 1.2rem;
-    font-size: 0.78rem;
-  }
-  .legal-right { font-size: 0.78rem; }
-
-  /* Footer content alignment — switch to top on mobile to prevent overflow */
-  #footer-content {
-    align-items: flex-start;
-    padding: 2.5rem 5vw 1.5rem;
-  }
-
-  /* GLE / W overlay */
-  #w-overlay { font-size: 45vw; }
-  .gle-word { font-size: clamp(2rem, 9vw, 6rem); }
-  .gle-text-wrap { gap: clamp(0.5rem, 3vw, 3rem); }
+  .footer-col1 { grid-column: unset; }
+  .footer-bottom-links { flex-direction: column; gap: 0.75rem; }
 }
 
 /* Small phones (≤480px) */
 @media (max-width: 480px) {
-  /* Hero */
-  .hero-btns { bottom: 12%; }
   .btn-start, .btn-login { padding: 0.55rem 1.1rem; font-size: 0.82rem; }
 
-  /* FAQ */
+  #numbers-section { padding: 1.5rem 0.5rem; }
+  .numbers-screen { padding: 2rem 1rem 1.25rem; border-radius: 12px; gap: 0.6rem; }
+  .number-layer { gap: 0.75rem; margin: 0.5rem 0; }
+
   #faq-section { padding: 3rem 4vw; }
-  .faq-item { padding: 1rem 0.9rem; }
-  .faq-q { font-size: 0.86rem; }
-  .faq-a { font-size: 0.82rem; }
-  .faq-bg-text { font-size: clamp(6rem, 32vw, 9rem); }
+  .faq-item { padding: 1.2rem 1rem; }
+  .faq-q { font-size: 0.88rem; }
 
-  /* Footer */
-  #footer-content { padding: 2rem 4vw 1.25rem; }
-  .footer-logo { font-size: 1.5rem; }
-  .footer-desc { font-size: 0.88rem; }
-  .nav-label { font-size: 0.78rem; }
-  .nav-group a, .contact-item { font-size: 0.85rem; }
-  .footer-legal { gap: 0.5rem; padding-top: 1.2rem; }
-  .legal-left { font-size: 0.72rem; gap: 0.4rem 0.8rem; }
-  .legal-right { font-size: 0.7rem; }
-  .status-pulse { width: 7px; height: 7px; }
+  #w-overlay { font-size: 60vw; }
 
-  /* W overlay */
-  #w-overlay { font-size: 55vw; }
-}
-
-/* Very small phones (≤360px) */
-@media (max-width: 360px) {
-  #hero-title { font-size: 1.7rem; }
-  .hero-btns { bottom: 10%; }
-  .btn-start, .btn-login { padding: 0.5rem 0.9rem; font-size: 0.78rem; }
-
-  #faq-section { padding: 2.5rem 3.5vw; }
-  .faq-q { font-size: 0.82rem; }
-  .faq-item { padding: 0.9rem 0.8rem; }
-
-  #footer-content { padding: 1.5rem 3.5vw 1rem; }
-  .footer-logo { font-size: 1.3rem; }
-  .legal-left { font-size: 0.65rem; }
-  #w-overlay { font-size: 50vw; }
-  
+  #footer { padding: 3rem 5vw 2.5rem; }
+  .footer-tagline { font-size: 0.88rem; }
 }
 </style>
