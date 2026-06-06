@@ -813,8 +813,8 @@ html { scroll-behavior: auto; }
 
 #w-bloom {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 10%;
+  left: 10%;
   transform: translate(-50%, -50%);
   width: 25vw;
   height: 25vw;
