@@ -149,11 +149,12 @@ onMounted(async () => {
           exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.4))
         }
 
-        // Title stays longer alone, then snaps away quickly while Drifting UP
-        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.6) / 0.06))
+        // Title stays longer alone, then snaps away quickly while Drifting DOWN
+        // Shift window to 0.01 for "straight up disappear"
+        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.6) / 0.01))
         
-        // Lower dock (targetY), then drift up as opacity drops
-        const activeY = (sceneP > 0.6) ? targetY - (1 - titleWorkstationFade) * baseH * 0.12 : yPos
+        // Rise back from below: add some positive offset to targetY when invisible
+        const activeY = (sceneP > 0.6) ? targetY + (1 - titleWorkstationFade) * baseH * 0.15 : yPos
         const activeScale = (sceneP > 0.6) ? targetScale : curScale
 
         gsap.set(title, {
