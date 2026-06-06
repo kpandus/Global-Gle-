@@ -363,7 +363,7 @@ onMounted(async () => {
         // As the W expands, we fade the container background to a deep forest green
         // This ensures the white footer text remains perfectly readable.
         const bgFillP = Math.max(0, (expandP - 0.4) / 0.6)
-        gsap.set(stickyWrap, { backgroundColor: gsap.utils.interpolate('#0a0d14', '#002211', bgFillP) })
+        gsap.set(stickyWrap, { backgroundColor: gsap.utils.interpolate('#0a0d14', '#081810ff', bgFillP) })
       } else {
         // Reset to black when not in expansion phase
         gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
