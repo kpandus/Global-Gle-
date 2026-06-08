@@ -857,12 +857,14 @@ html { scroll-behavior: auto; }
   opacity: 0;
   z-index: 200;
   padding: clamp(2rem, 5vw, 4rem) 6vw clamp(1.5rem, 3vw, 2.5rem);
+  background: #0d2e1c;
 }
 
 #footer {
   width: 100%;
   max-width: 1300px;
   color: #fff;
+  background: #0d2e1c;
 }
 
 .footer-top {
