@@ -4,13 +4,12 @@ import Earth from '~/components/Earth.client.vue'
 import Scene from '~/components/Scene.client.vue'
 
 const threeEarth = ref(null)
-const threeScene = ref(null)
 let cleanupFns = []
 
 onMounted(async () => {
   const { gsap } = await import('gsap')
   const { ScrollTrigger } = await import('gsap/ScrollTrigger')
-  gsap.registerPlugin(ScrollTrigger)
+  gsap.registerPlugin(ScroallTrigger)
 
   const $ = (sel) => document.querySelector(sel)
   const $$ = (sel) => document.querySelectorAll(sel)
@@ -43,20 +42,15 @@ onMounted(async () => {
 
   // ─── ANIMATION CONSTANTS ─────────────────────────────────────────────────
   const getHeroH = () => 4 * baseH
-  const getSceneH = () => 4 * baseH
+  const getSceneH = () => 2.5 * baseH
 
   // ─── HERO & TRAVEL LOGIC ──────────────────────────────────────────────────
   const title = $('#hero-title')
-  const partnerText = $('#partner-text')
   const btns = $('.hero-btns')
   const globeCanvas = $('#globe-canvas')
 
   gsap.set(title, { opacity: 0 })
-  gsap.set(partnerText, { opacity: 0, x: 50 })
   gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
-
-  const dockedAlphaMult = { value: 1 }
-  let dockedTimerStarted = false
 
   ScrollTrigger.create({
     trigger: '#hero',
@@ -79,11 +73,10 @@ onMounted(async () => {
         threeEarth.value.setScrollProgress(globeP)
       }
 
-      const appearanceStart = hh * 0.2
-      const appearanceEnd = hh * 0.3
-      const btnsEnd = appearanceEnd + baseH // Stay 1 screen height longer
+      const appearanceStart = hh * 0.25
+      const appearanceEnd = hh * 0.45
 
-      if (scrollY < btnsEnd) {
+      if (scrollY < appearanceEnd) {
         gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
       } else {
         gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
@@ -99,95 +92,41 @@ onMounted(async () => {
       }
 
       if (scrollY >= appearanceEnd) {
-        const landingPoint = hh + (sh * 0.15) 
+        const landingPoint = hh + (sh * 0.2)
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
 
-        // Docking: Slightly below center before exit
-        const targetY = baseH * 0.02
+        // Docking: Desktop high (-0.35), Mobile at center (0) as requested (52% height)
+        const targetY = isMobile ? 0 : -baseH * 0.35
         const targetScale = isMobile ? 0.35 : 0.3
         const colorVal = gsap.utils.interpolate("#ffffff", "#00ff88", journeyP)
 
-        let yPos = (scrollY > landingPoint) ? targetY : journeyP * targetY
-        let curScale = (scrollY > landingPoint) ? targetScale : 1 - (journeyP * (1 - targetScale))
+        let yPos = journeyP * targetY
         let topFade = 1
 
         if (scrollY > landingPoint) {
-           // Dock and disappear logic
-           if (isDesktopView && !dockedTimerStarted) {
-             dockedTimerStarted = true
-             gsap.to(dockedAlphaMult, {
-               value: 0,
-               duration: 0.8,
-               delay: 10,
-               ease: "power2.inOut"
-             })
+           yPos = targetY
+
+           // UN-STICK LOGIC: Only apply to desktop, as user wants mobile to "stick there"
+           if (!isMobile) {
+             const unstickPoint = hh + sh * 0.2 
+             if (scrollY > unstickPoint) {
+                yPos -= (scrollY - unstickPoint)
+             }
+             
+             const topThreshold = targetY - 20
+             if (yPos < topThreshold) {
+                topFade = Math.max(0, 1 - (topThreshold - yPos) / 100)
+             }
            }
-        } else {
-           // Reset docked timer if scrolling back up
-           dockedTimerStarted = false
-           gsap.killTweensOf(dockedAlphaMult)
-           dockedAlphaMult.value = 1
         }
-
-        const titleX = isMobile ? 0 : baseW * 0.22
-        const charX = isMobile ? 0 : -baseW * 0.18
-        
-        // Character entry timing (moved much earlier to 0.45 to follow globe immediately)
-        const sceneStart = hh * 0.45
-        const sceneEnd = hh + (sh * 0.7)
-        const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
-        
-        // Pass the pre-smoothed (scrubbed) progress to the 3D scene
-        if (threeScene.value?.setScrollProgress) {
-          threeScene.value.setScrollProgress(sceneP)
-        }
-
-        // Persistence logic: Stay for 0.2 screen heights as requested
-        const exitStart = sceneEnd + (baseH * 0.2) 
-        let exitAlpha = 1
-        if (scrollY > exitStart) {
-          exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.4))
-        }
-
-        // Title stays longer alone, then snaps away quickly while Drifting DOWN
-        // Shift window to 0.01 for "straight up disappear"
-        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.6) / 0.01))
-        
-        // Rise back from below: add some positive offset to targetY when invisible
-        const activeY = (sceneP > 0.6) ? targetY + (1 - titleWorkstationFade) * baseH * 0.15 : yPos
-        const activeScale = (sceneP > 0.6) ? targetScale : curScale
 
         gsap.set(title, {
-          x: 0,
-          y: activeY,
-          scale: activeScale,
+          y: yPos,
+          scale: 1 - (journeyP * (1 - targetScale)),
           color: colorVal,
-          opacity: topFade * dockedAlphaMult.value * exitAlpha * titleWorkstationFade,
+          opacity: topFade,
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
-
-        // DELAYED STATEMENT: Starts appearing only after Title is gone (sceneP > 0.7)
-        const charShiftP = Math.max(0, (sceneP - 0.7) / 0.3)
-        const charShiftE = Math.pow(charShiftP, 2)
-        
-        const curCharX = charShiftE * charX
-
-        const charModel = $('.character-model')
-        if (charModel) {
-          gsap.set(charModel, { x: curCharX })
-        }
-
-        if (partnerText) {
-          // Quadratic reveal for smoothness, starting only after the title is gone
-          const partnerOpacity = Math.pow(charShiftP, 2) * exitAlpha
-
-          gsap.set(partnerText, { 
-            opacity: partnerOpacity, 
-            x: 50 * (1 - charShiftP),
-            y: 0, 
-            pointerEvents: (partnerOpacity > 0.5) ? 'all' : 'none'
-          })
-        }
 
         // Reveal navbar brand ONLY after hero title starts fading/moving away
         if (navBrand) {
@@ -199,20 +138,21 @@ onMounted(async () => {
       }
 
       if (globeCanvas) {
-        // EXTENDED GLOBE EXIT: Fades out between 45% and 85% of hero height
-        const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh * 0.45) / (hh * 0.4)))
+        const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh + 200) / 400))
         globeCanvas.style.opacity = 1 - globeFadeP
-        globeCanvas.style.pointerEvents = 'none'
+        globeCanvas.style.pointerEvents = globeFadeP >= 1 ? 'none' : 'none'
+      }
+
+      const exitStart = hh + sh - 600
+      if (scrollY > exitStart) {
+        const exitP = Math.min(1, (scrollY - exitStart) / 400)
+        gsap.set(title, { opacity: 1 - exitP })
       }
     }
   })
 
-    // ─── W REVEAL FOOTER ANIMATION ──────────────────────────────────────────
-  // ─── UNIFIED PUNCHY SEQUENCE (GLE -> W -> REVEAL) ───────────────────────
+  // ─── W REVEAL FOOTER ANIMATION ──────────────────────────────────────────
   const footerSec = $('#footer-reveal-section')
-  const gleWords = gsap.utils.toArray('.gle-word')
-  const gleMid = $('#gle-mid')
-  const sideGles = gsap.utils.toArray('.side-gle')
   const wOverlay = $('#w-overlay')
   const wBloom = $('#w-bloom')
   const stickyWrap = $('#footer-sticky-wrap')
@@ -225,227 +165,80 @@ onMounted(async () => {
     scrub: 1.2,
     onUpdate(self) {
       const p = self.progress
-      
-      // PHASE 1: GRAVITY DROOP-DOWN (0.0 -> 0.2)
-      if (p < 0.2) {
-        const dropP = p / 0.2
 
-        gleWords.forEach((word, i) => {
-          // Stagger: left first, mid second, right third
-          const delay = i * 0.22
-          const localP = Math.max(0, Math.min(1, (dropP - delay) / (1 - delay)))
-
-          let y, sY, sX, rot, skewX, opacity
-
-          if (localP < 0.55) {
-            // ── FALL: rubber droop-stretch on the way down ──
-            const t = localP / 0.55
-            const accel = t * t * (3 - 2 * t)          // smoothstep accelerate
-            y = -280 + (280 + 42) * accel               // shoots from -280 → +42 (overshoot)
-            sY = 1 + 0.6 * Math.sin(t * Math.PI * 0.85) // vertical stretch (droop)
-            sX = 1 - 0.2 * Math.sin(t * Math.PI * 0.85) // horizontal compress
-            rot = (i - 1) * -20 * (1 - t * t)           // angled fall → straightens
-            skewX = (i === 0 ? 14 : i === 2 ? -14 : 0) * (1 - accel) // outer words lean outward
-            opacity = Math.min(1, t * 3)
-          } else if (localP < 0.74) {
-            // ── IMPACT: hard squash on landing ──
-            const t = (localP - 0.55) / 0.19
-            const sq = Math.sin(t * Math.PI)
-            y = 42 - 42 * t * t                          // slides back from overshoot
-            sY = 1 - 0.45 * sq                           // hard squash
-            sX = 1 + 0.32 * sq                           // splat wide
-            rot = 0; skewX = 0; opacity = 1
-          } else if (localP < 0.88) {
-            // ── REBOUND: smaller spring-back bounce ──
-            const t = (localP - 0.74) / 0.14
-            const b = Math.sin(t * Math.PI) * (1 - t * 0.4)
-            y = -24 * b
-            sY = 1 - 0.15 * b
-            sX = 1 + 0.10 * b
-            rot = 0; skewX = 0; opacity = 1
-          } else {
-            // ── SETTLE: at rest ──
-            y = 0; sY = 1; sX = 1; rot = 0; skewX = 0; opacity = 1
-          }
-
-          gsap.set(word, {
-            y, scaleY: sY, scaleX: sX,
-            rotation: rot, skewX, opacity,
-            transformOrigin: 'center top'
-          })
-        })
-
-        gsap.set(gleMid, { textContent: 'GLE', color: 'transparent', webkitTextStroke: '1.5px rgba(255,255,255,0.18)' })
-        gsap.set(wOverlay, { opacity: 0 })
-        gsap.set(footerContent, { opacity: 0 })
-      }
-
-      // PHASE 2: W WIREFRAME FORMS — centred via wOverlay (0.20 → 0.44)
-      if (p >= 0.2 && p < 0.44) {
-        const morphP = (p - 0.2) / 0.24  // 0 → 1
-
-        // All GLE words fade out (left first, mid last)
-        gsap.set(sideGles[0], { opacity: Math.max(0, 1 - morphP * 2.8) })
-        if (sideGles[1]) gsap.set(sideGles[1], { opacity: Math.max(0, 1 - Math.max(0, morphP - 0.1) * 2.8) })
-        gsap.set(gleMid, { opacity: Math.max(0, 1 - morphP * 3.5) })
-
-        // wOverlay builds the wireframe W from the centre of the screen
+      // PHASE 1: W WIREFRAME FORMS (0.0 → 0.44)
+      if (p < 0.44) {
+        const morphP = p / 0.44
         const stroke = 2 + morphP * 6
         gsap.set(wOverlay, {
           opacity: morphP > 0.05 ? 1 : 0,
-          scale: 0.4 + morphP * 0.82,         // grows: 0.4 → 1.22
+          scale: 0.4 + morphP * 0.82,
           color: 'transparent',
-          webkitTextStroke: `${stroke}px rgba(0, 255, 136, ${Math.min(1, morphP * 1.4)})`,
+          webkitTextStroke: `${stroke}px rgba(0, 160, 80, ${Math.min(1, morphP * 1.4)})`,
           filter: 'none',
           textShadow: 'none'
         })
-
         gsap.set(wBloom, { opacity: 0 })
         gsap.set(footerContent, { opacity: 0 })
       }
 
-      // PHASE 3: W FILLS SOLID PURPLE (0.44 → 0.62)
+      // PHASE 2: W FILLS SOLID PURPLE (0.44 → 0.62)
       if (p >= 0.44 && p < 0.62) {
-        const fillP = (p - 0.44) / 0.18  // 0 → 1
-
-        gsap.set(sideGles, { opacity: 0 })
-        gsap.set(gleMid, { opacity: 0 })
-
-        // wOverlay fills with bold solid green — scale continues from Phase 2 end (1.22)
+        const fillP = (p - 0.44) / 0.18
         gsap.set(wOverlay, {
           opacity: 1,
           scale: 1.22 + fillP * 0.08,
-          color: `rgba(0, 255, 136, ${fillP})`,
-          webkitTextStroke: `8px rgba(0, 255, 136, 1)`,
+          color: `rgba(0, 100, 50, ${fillP})`,
+          webkitTextStroke: '8px rgba(0, 160, 80, 1)',
           filter: 'none',
           textShadow: 'none'
         })
-
         gsap.set(wBloom, { opacity: 0 })
-
         gsap.set(footerContent, { opacity: 0 })
       }
 
-      // PHASE 4: W EXPANDS — FOOTER OPENS (0.62 → 1.0)
+      // PHASE 3: W EXPANDS — FOOTER OPENS (0.62 → 1.0)
       if (p >= 0.62) {
-        const expandP = Math.min(1, (p - 0.62) / 0.38)  // 0 → 1
-        const ease = expandP * expandP * (3 - 2 * expandP)  // smoothstep
+        const expandP = Math.min(1, (p - 0.62) / 0.38)
+        const ease = expandP * expandP * (3 - 2 * expandP)
+        const wScale = 1.30 + ease * 34
 
-        gsap.set(sideGles, { opacity: 0 })
-        gsap.set(gleMid, { opacity: 0 })
+        // Footer rises in — starts at 28% into expansion
+        const footerRaw = Math.max(0, (expandP - 0.28) / 0.72)
+        const footerEase = footerRaw * footerRaw * (3 - 2 * footerRaw)
 
-        // W expands hard — no blur, clean geometric explosion
-        // Increased scale to 120 to ensure it covers the entire screen
-        const wScale = 1.30 + ease * 120
+        // W fades out as footer appears — eliminates dark letter gaps on purple bg
+        const wOpacity = Math.max(0, 1 - footerEase * 2)
+
         gsap.set(wOverlay, {
-          opacity: 1,
+          opacity: wOpacity,
           scale: wScale,
-          color: 'rgba(0, 255, 136, 1)',
-          webkitTextStroke: '8px rgba(0, 255, 136, 1)',
+          color: 'rgba(0, 100, 50, 1)',
+          webkitTextStroke: '8px rgba(0, 160, 80, 1)',
           filter: 'none',
           textShadow: 'none'
         })
-
-        // Bloom fades as W fills screen
         gsap.set(wBloom, {
           opacity: Math.max(0, 0.7 - expandP * 2.5),
           scale: 4.5 + expandP * 10
         })
 
-        // Footer rises in cleanly — starts at 28% into expansion
-        const footerRaw = Math.max(0, (expandP - 0.28) / 0.72)
-        const footerEase = footerRaw * footerRaw * (3 - 2 * footerRaw)
+        // Fill the sticky wrap with dark green during expansion so W gaps are invisible
+        gsap.set(stickyWrap, { backgroundColor: '#0d2e1c' })
+
         gsap.set(footerContent, {
           opacity: footerEase,
           y: (1 - footerEase) * -25
         })
-
-        // As the W expands, we fade the container background to a deep forest green
-        // This ensures the white footer text remains perfectly readable.
-        const bgFillP = Math.max(0, (expandP - 0.4) / 0.6)
-        gsap.set(stickyWrap, { backgroundColor: gsap.utils.interpolate('#0a0d14', '#e319d2ff', bgFillP) })
-      } else {
-        // Reset to black when not in expansion phase
-        gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
       }
+
+      if (p < 0.62) gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
     },
     onToggle: (self) => {
-      // Only reset if we're not at the very end
-      if (!self.isActive && self.progress < 0.9) gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
+      if (!self.isActive) gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
     },
-    onLeave: () => {}, // Keep the background color as set in onUpdate
+    onLeave: () => gsap.set(stickyWrap, { backgroundColor: '#0a0d14' }),
     onLeaveBack: () => gsap.set(stickyWrap, { backgroundColor: '#0a0d14' })
-  })
-
-  // ─── NUMBERS (CONTINUOUS MATRIX FALL) ────────────────────────────────────
-  const numberItems = gsap.utils.toArray('.number-item')
-  numberItems.forEach((el, i) => {
-    const duration = 4 + Math.random() * 4
-    const delay = Math.random() * 5
-    gsap.fromTo(el, 
-      { y: -20, opacity: 0 },
-      {
-        y: 120,
-        opacity: Math.random() * 0.8 + 0.2,
-        duration: duration,
-        repeat: -1,
-        delay: delay,
-        ease: "none"
-      }
-    )
-  })
-
-  // Numbers Screen Entrance (The Louvre Glide)
-  const numbersBox = $('.numbers-screen')
-  if (numbersBox) {
-    // ENTRANCE
-    gsap.fromTo(numbersBox, 
-      { y: -500, opacity: 0, skewX: 15, rotationX: 45 },
-      {
-        y: 0,
-        opacity: 1,
-        skewX: 0,
-        rotationX: 0,
-        scrollTrigger: {
-          trigger: '#numbers-section',
-          start: 'top 95%',
-          end: 'top 50%',
-          scrub: 1.5
-        }
-      }
-    )
-
-    // Numbers Screen Exit Effect
-    ScrollTrigger.create({
-      trigger: '#numbers-section',
-      start: 'bottom 98%',
-      end: 'bottom top',
-      scrub: 1.2,
-      onUpdate(self) {
-        const p = self.progress
-        gsap.set(numbersBox, { 
-          opacity: 1 - p,
-          y: -400 * p, 
-          rotationX: 40 * p, 
-          skewY: 10 * p,
-          transformPerspective: 1200,
-          clipPath: `inset(${p * 100}% 0% 0% 0%)`,
-          filter: `blur(${p * 10}px) brightness(${1 + p * 1.5})`
-        })
-      }
-    })
-  }
-
-  gsap.utils.toArray('.number-layer').forEach((el, i) => {
-    ScrollTrigger.create({
-      trigger: '#numbers-section',
-      start: 'top bottom',
-      end: 'bottom top',
-      scrub: 1,
-      onUpdate(self) {
-        gsap.set(el, { x: (i % 2 === 0 ? -1 : 1) * 30 * self.progress })
-      }
-    })
   })
 
   // ─── FAQ ─────────────────────────────────────────────────────────────────
@@ -515,9 +308,6 @@ onUnmounted(() => {
         <span class="hero-letter">L</span>
         <span class="hero-letter">E</span>
       </h1>
-      <div id="partner-text">
-        <WhatIDo />
-      </div>
     </div>
 
     <section id="hero">
@@ -529,13 +319,12 @@ onUnmounted(() => {
     <section>
       <div class="scene-wrapper">
         <ClientOnly>
-          <Scene ref="threeScene" />
+          <Scene />
         </ClientOnly>
       </div>
     </section>
 
-   
-   <section id="faq-section">
+    <section id="faq-section">
       <div class="faq-bg-text" aria-hidden="true">FAQ</div>
       <p class="faq-label" id="faq-label">Questions</p>
       <h2 class="faq-header" id="faq-head">What this <em>actually</em> does.</h2>
@@ -564,15 +353,12 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- UNIFIED CINEMATIC FOOTER SECTION -->
+    <!-- FOOTER REVEAL SECTION -->
     <section id="footer-reveal-section">
       <div id="footer-sticky-wrap">
-
-        <!-- Purple bloom behind the word -->
         <div id="w-bloom"></div>
-        <!-- Internal Logo Reveal -->
         <div id="w-overlay">W</div>
-        
+
         <div id="footer-content">
           <footer id="footer">
             <div class="footer-top">
@@ -608,7 +394,7 @@ onUnmounted(() => {
               <div class="nav-group">
                 <span class="nav-label">Contact</span>
                 <span class="contact-item">Global Gle Inc.</span>
-                <a href="mailto:hello@globalgle.com" class="contact-item">hello@globalgle.com</a>
+                <a href="mailto:hello@globalgle.com" class="contact-item">globalgle@gmail.com</a>
                 <a href="tel:+2348000000000" class="contact-item">+234 800 000 0000</a>
               </div>
 
@@ -676,23 +462,6 @@ html { scroll-behavior: auto; }
   padding: 0 5vw;
 }
 
-#partner-text {
-  position: absolute;
-  top: 50%;
-  right: 5%;
-  transform: translateY(-50%);
-  width: 55%;
-  color: #fff;
-  opacity: 0;
-  will-change: transform, opacity;
-  z-index: 100;
-  pointer-events: none;
-}
-#partner-text .highlight {
-  color: #00ff88;
-  text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
-}
-
 .hero-btns {
   display: flex;
   align-items: center;
@@ -706,7 +475,7 @@ html { scroll-behavior: auto; }
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 16rem;
+  bottom: clamp(1.5rem, 8vh, 8rem);
   z-index: 101;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: max-content;
@@ -727,40 +496,10 @@ html { scroll-behavior: auto; }
 
 .scene-wrapper {
   width: 100vw;
-  height: 400vh;
+  height: 250vh;
   position: relative;
   z-index: 5;
 }
-
-/* NUMBERS */
-#numbers-section { width: 100vw; min-height: 120vh; background: #0a0d14; display: flex; align-items: center; justify-content: center; padding: clamp(1rem, 5vw, 4rem); overflow: hidden; position: relative; z-index: 10; }
-.numbers-screen { 
-  position: relative; 
-  width: min(860px, 95vw); 
-  min-height: clamp(300px, 50vh, 480px); 
-  border-radius: 24px; 
-  border: 1px solid rgba(255, 255, 255, 0.1); 
-  background: rgba(255, 255, 255, 0.03); 
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: clamp(1.5rem, 5vw, 3.5rem) clamp(1rem, 3vw, 2.5rem); 
-  display: flex; 
-  flex-direction: column; 
-  justify-content: center; 
-  gap: 1rem; 
-  overflow: hidden; 
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-}
-.screen-chrome { position: absolute; top: 1rem; left: 1.2rem; display: flex; gap: 0.4rem; }
-.chrome-dot { width: 8px; height: 8px; border-radius: 50%; }
-.chrome-dot:nth-child(1) { background: rgba(255,80,80,0.55); border: 1px solid rgba(255,80,80,0.7); }
-.chrome-dot:nth-child(2) { background: rgba(255,200,0,0.55); border: 1px solid rgba(255,200,0,0.7); }
-.chrome-dot:nth-child(3) { background: rgba(0,255,136,0.55); border: 1px solid rgba(0,255,136,0.7); }
-.number-layer { display: flex; gap: clamp(1rem, 4vw, 4rem); margin: 1.2rem 0; white-space: nowrap; }
-.number-item { font-family: 'Urbanist', sans-serif; font-weight: 800; line-height: 1; will-change: transform, opacity; }
-.nl-top .number-item { font-size: clamp(1.5rem, 6vw, 7rem); color: rgba(0,255,136,0.4); -webkit-text-stroke: 1px rgba(255,255,255,0.15); }
-.nl-mid .number-item { font-size: clamp(2.5rem, 12vw, 13rem); -webkit-text-stroke: 2px rgba(0,255,136,0.4); color: transparent; }
-.nl-bot .number-item { font-size: clamp(1.2rem, 5vw, 5rem); color: rgba(0,255,136,0.4); -webkit-text-stroke: 1px rgba(255,255,255,0.15); }
 
 /* FAQ */
 #faq-section { width: 100vw; min-height: 100vh; background: #0a0d14; padding: clamp(3rem, 8vw, 6rem) 5vw; position: relative; z-index: 10; overflow: hidden; }
@@ -795,10 +534,9 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 120vh;
-  background: red;
+  height: 220vh;
+  background: #000;
   z-index: 30;
-  margin-top: 0;
 }
 
 #footer-sticky-wrap {
@@ -813,12 +551,12 @@ html { scroll-behavior: auto; }
 
 #w-bloom {
   position: absolute;
-  top: 10%;
-  left: 10%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
   width: 25vw;
   height: 25vw;
-  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); /* Neutral faint white, NO purple */
+  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
   border-radius: 50%;
   z-index: 15;
   filter: blur(80px);
@@ -857,6 +595,7 @@ html { scroll-behavior: auto; }
   opacity: 0;
   z-index: 200;
   padding: clamp(2rem, 5vw, 4rem) 6vw clamp(1.5rem, 3vw, 2.5rem);
+  background: #0d2e1c;
 }
 
 #footer {
@@ -884,9 +623,8 @@ html { scroll-behavior: auto; }
 }
 
 .footer-desc {
-  color: rgba(255,255,255,0.95);
+  color: rgba(255,255,255,0.5);
   line-height: 1.6;
-  font-weight: 600;
   font-size: clamp(0.9rem, 1.5vw, 1.05rem);
   margin-bottom: 2.2rem;
   max-width: 240px;
@@ -910,9 +648,8 @@ html { scroll-behavior: auto; }
 .social-cir svg { width: 18px; height: 18px; display: block; }
 
 .contact-item {
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.5);
   text-decoration: none;
-  font-weight: 600;
   font-size: clamp(0.85rem, 1.5vw, 0.95rem);
   transition: color 0.2s;
   display: block;
@@ -931,9 +668,8 @@ html { scroll-behavior: auto; }
   margin-bottom: 0.5rem;
 }
 .nav-group a {
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.45);
   text-decoration: none;
-  font-weight: 600;
   font-size: clamp(0.85rem, 1.5vw, 1rem);
   transition: 0.2s;
 }
@@ -999,9 +735,8 @@ html { scroll-behavior: auto; }
 }
 
 .footer-col2 nav a {
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.6);
   text-decoration: none;
-  font-weight: 600;
   font-size: 0.95rem;
   transition: color 0.2s;
 }
@@ -1059,7 +794,6 @@ html { scroll-behavior: auto; }
 @media (max-width: 1200px) {
   .footer-top { gap: 2.5rem; }
   .nav-group { min-width: 120px; }
-  #footer-content { padding: clamp(2rem, 4vw, 3.5rem) 5vw clamp(1.2rem, 2.5vw, 2rem); }
 }
 
 /* Tablet (≤1024px) */
@@ -1123,16 +857,6 @@ html { scroll-behavior: auto; }
   }
   .legal-right { font-size: 0.78rem; }
 
-  /* Footer content alignment — switch to top on mobile to prevent overflow */
-  #footer-content {
-    align-items: flex-start;
-    padding: 2.5rem 5vw 1.5rem;
-  }
-
-  /* GLE / W overlay */
-  #w-overlay { font-size: 45vw; }
-  .gle-word { font-size: clamp(2rem, 9vw, 6rem); }
-  .gle-text-wrap { gap: clamp(0.5rem, 3vw, 3rem); }
 }
 
 /* Small phones (≤480px) */
@@ -1149,7 +873,6 @@ html { scroll-behavior: auto; }
   .faq-bg-text { font-size: clamp(6rem, 32vw, 9rem); }
 
   /* Footer */
-  #footer-content { padding: 2rem 4vw 1.25rem; }
   .footer-logo { font-size: 1.5rem; }
   .footer-desc { font-size: 0.88rem; }
   .nav-label { font-size: 0.78rem; }
@@ -1158,8 +881,6 @@ html { scroll-behavior: auto; }
   .legal-left { font-size: 0.72rem; gap: 0.4rem 0.8rem; }
   .legal-right { font-size: 0.7rem; }
   .status-pulse { width: 7px; height: 7px; }
-
-  /* W overlay */
   #w-overlay { font-size: 55vw; }
 }
 
@@ -1173,10 +894,8 @@ html { scroll-behavior: auto; }
   .faq-q { font-size: 0.82rem; }
   .faq-item { padding: 0.9rem 0.8rem; }
 
-  #footer-content { padding: 1.5rem 3.5vw 1rem; }
   .footer-logo { font-size: 1.3rem; }
   .legal-left { font-size: 0.65rem; }
   #w-overlay { font-size: 50vw; }
-  
 }
 </style>
