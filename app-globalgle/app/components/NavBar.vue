@@ -47,6 +47,7 @@ const menuOpen = ref(false)
         <a href="#" class="drawer-link">About</a>
         <a href="#" class="drawer-link">Services</a>
         <a href="#" class="drawer-link">Portfolio</a>
+        <a href="#" class="drawer-link drawer-contact">Contact</a>
       </div>
     </Transition>
 

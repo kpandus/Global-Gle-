@@ -688,6 +688,14 @@ html { scroll-behavior: auto; }
   z-index: 100;
   pointer-events: none;
 }
+@media (max-width: 1024px) {
+  #partner-text {
+    width: 90%;
+    right: 5%;
+    left: 5%;
+    text-align: center;
+  }
+}
 #partner-text .highlight {
   color: #00ff88;
   text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
@@ -706,10 +714,16 @@ html { scroll-behavior: auto; }
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 16rem;
+  top: 14rem;
   z-index: 101;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: max-content;
+}
+@media (max-width: 768px) {
+  .hero-btns {
+    top: auto;
+    bottom: 12%; 
+  }
 }
 .btn-start { padding: 0.6rem 1.8rem; border-radius: 100px; font-weight: 600; cursor: pointer; color: #fff; background: rgba(0,80,40,0.85); border: 1.5px solid rgba(0,255,136,0.86); font-size: clamp(0.75rem, 2vw, 1rem); }
 .btn-login { padding: 0.6rem 1.8rem; border-radius: 100px; cursor: pointer; color: rgba(255,255,255,0.78); background: transparent; border: none; font-size: clamp(0.75rem, 2vw, 1rem); }
@@ -791,6 +805,11 @@ html { scroll-behavior: auto; }
 .faq-q { display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: clamp(0.9rem, 2vw, 1.05rem); font-weight: 500; gap: 1rem; }
 .faq-a { max-height: 0; overflow: hidden; transition: all 0.4s ease; color: #6b7280; font-size: clamp(0.85rem, 2vw, 0.95rem); }
 .faq-item.open .faq-a { max-height: 250px; padding-top: 1rem; }
+
+@media (max-width: 768px) {
+  #faq-section { padding: 4rem 6vw; }
+  .faq-bg-text { font-size: 15rem; top: 60%; }
+}
 
 #footer-reveal-section {
   position: relative;
@@ -1128,13 +1147,11 @@ html { scroll-behavior: auto; }
   /* Footer content alignment — switch to top on mobile to prevent overflow */
   #footer-content {
     align-items: flex-start;
-    padding: 2.5rem 5vw 1.5rem;
+    padding: 3rem 6vw 1.5rem;
   }
 
   /* GLE / W overlay */
-  #w-overlay { font-size: 45vw; }
-  .gle-word { font-size: clamp(2rem, 9vw, 6rem); }
-  .gle-text-wrap { gap: clamp(0.5rem, 3vw, 3rem); }
+  #w-overlay { font-size: 60vw; }
 }
 
 /* Small phones (≤480px) */

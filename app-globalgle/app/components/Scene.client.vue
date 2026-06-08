@@ -404,16 +404,50 @@ onMounted(async () => {
           }
         }
       } else {
-        // Mobile
-        const easedP = Math.pow(p, 3)
+        // Mobile (iOS etc): Locked to Solo Mode. No workstation transition.
+        const easedP = Math.pow(p, 2) // Quicker fade-in
         const scaleVal = baseScale + (easedP * (1.0 - baseScale))
+        
         character.scale.set(scaleVal, scaleVal, scaleVal)
+        character.position.x = 0 // Keep centered
+        character.rotation.y = 0 // Keep straight
+
+        // Force arms down
+        if (armL) armL.rotation.set(-1.57, 0, 0)
+        if (armR) armR.rotation.set(-1.57, 0, 0)
+
         character.traverse(child => {
-          if (child.isMesh && child.visible && child.material) {
-            child.material.transparent = true
+          if (!child.isMesh || !child.material) return
+          const name = child.name.toLowerCase()
+          
+          // Whitelist logic for character parts as defined in getDisplayMode logic
+          const isCharacterPart = child.type === 'SkinnedMesh' || 
+                                name.includes('body') || name.includes('head') || 
+                                name.includes('shirt') || name.includes('pant') || 
+                                name.includes('shoe') || name.includes('hair') || 
+                                name.includes('skin') || name.includes('eye') || 
+                                name.includes('hand') || name.includes('foot') || 
+                                name.includes('male') || name.includes('character') || 
+                                name.includes('avatar') || name.includes('jean') ||
+                                name.includes('sneaker') || name.includes('hoodie') ||
+                                name.includes('cloth') || name.includes('leg') ||
+                                name.includes('arm') || name.includes('neck') ||
+                                name.includes('torso') || name.includes('waist') ||
+                                name.includes('hips') || name.includes('thigh') ||
+                                name.includes('shin') || name.includes('shoulder')
+
+          if (isCharacterPart) {
+            child.visible = true
+            child.material.transparent = easedP < 0.99
             child.material.opacity = easedP
+          } else {
+            child.visible = false
           }
         })
+
+        // Mobile Camera Framing: High and zoomed in (Upper body focus)
+        camera.position.set(0, 14.5, 30) 
+        camera.lookAt(0, 15.2, 0)
       }
 
       renderer.render(scene, camera)
