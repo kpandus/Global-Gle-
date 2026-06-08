@@ -295,7 +295,7 @@ onMounted(async () => {
           opacity: morphP > 0.05 ? 1 : 0,
           scale: 0.4 + morphP * 0.82,         // grows: 0.4 → 1.22
           color: 'transparent',
-          webkitTextStroke: `${stroke}px rgba(0, 255, 136, ${Math.min(1, morphP * 1.4)})`,
+          webkitTextStroke: `${stroke}px rgba(13, 46, 28, 1, ${Math.min(1, morphP * 1.4)})`,
           filter: 'none',
           textShadow: 'none'
         })
@@ -316,7 +316,7 @@ onMounted(async () => {
           opacity: 1,
           scale: 1.22 + fillP * 0.08,
           color: `rgba(0, 255, 136, ${fillP})`,
-          webkitTextStroke: `8px rgba(0, 255, 136, 1)`,
+          webkitTextStroke: `8px rgba(13, 46, 28, 1)`,
           filter: 'none',
           textShadow: 'none'
         })
@@ -341,7 +341,7 @@ onMounted(async () => {
           opacity: 1,
           scale: wScale,
           color: 'rgba(0, 255, 136, 1)',
-          webkitTextStroke: '8px rgba(0, 255, 136, 1)',
+          webkitTextStroke: '8px rgba(13, 46, 28, 1)',
           filter: 'none',
           textShadow: 'none'
         })
