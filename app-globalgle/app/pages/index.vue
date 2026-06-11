@@ -299,7 +299,7 @@ onMounted(async () => {
           opacity: morphP > 0.05 ? 1 : 0,
           scale: 0.4 + morphP * 0.82,         // grows: 0.4 → 1.22
           color: 'transparent',
-          webkitTextStroke: `${stroke}px rgba(0, 255, 136, ${Math.min(1, morphP * 1.4)})`,
+          webkitTextStroke: `${stroke}px rgba(13, 46, 28, ${Math.min(1, morphP * 1.4)})`,
           filter: 'none',
           textShadow: 'none'
         })
@@ -315,12 +315,12 @@ onMounted(async () => {
         gsap.set(sideGles, { opacity: 0 })
         gsap.set(gleMid, { opacity: 0 })
 
-        // wOverlay fills with bold solid green — scale continues from Phase 2 end (1.22)
+        // wOverlay fills with bold forest green — scale continues from Phase 2 end (1.22)
         gsap.set(wOverlay, {
           opacity: 1,
           scale: 1.22 + fillP * 0.08,
-          color: `rgba(0, 255, 136, ${fillP})`,
-          webkitTextStroke: `8px rgba(0, 255, 136, 1)`,
+          color: `rgba(13, 46, 28, ${fillP})`,
+          webkitTextStroke: `8px rgba(13, 46, 28, 1)`,
           filter: 'none',
           textShadow: 'none'
         })
@@ -344,8 +344,8 @@ onMounted(async () => {
         gsap.set(wOverlay, {
           opacity: 1,
           scale: wScale,
-          color: 'rgba(0, 255, 136, 1)',
-          webkitTextStroke: '8px rgba(0, 255, 136, 1)',
+          color: 'rgba(13, 46, 28, 1)',
+          webkitTextStroke: '8px rgba(13, 46, 28, 1)',
           filter: 'none',
           textShadow: 'none'
         })
@@ -781,7 +781,14 @@ html { scroll-behavior: auto; }
 .nl-bot .number-item { font-size: clamp(1.2rem, 5vw, 5rem); color: rgba(0,255,136,0.4); -webkit-text-stroke: 1px rgba(255,255,255,0.15); }
 
 /* FAQ */
-#faq-section { width: 100vw; min-height: 100vh; background: #0a0d14; padding: clamp(3rem, 8vw, 6rem) 5vw; position: relative; z-index: 10; overflow: hidden; }
+#faq-section { 
+  width: 100vw; 
+  background: #0a0d14; 
+  padding: clamp(2rem, 5vw, 4rem) 5vw clamp(1rem, 3vw, 2rem); 
+  position: relative; 
+  z-index: 10; 
+  overflow: hidden; 
+}
 .faq-bg-text {
   position: absolute;
   top: 58%;
@@ -817,8 +824,7 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 120vh;
-  background: red;
+  height: 140vh;
   z-index: 30;
   margin-top: 0;
 }
