@@ -42,8 +42,8 @@ onMounted(async () => {
   if (navBrand) gsap.set(navBrand, { opacity: 0 })
 
   // ─── ANIMATION CONSTANTS ─────────────────────────────────────────────────
-  const getHeroH = () => 4 * baseH
-  const getSceneH = () => 4 * baseH
+  const getHeroH = () => 0.5* baseH
+  const getSceneH = () => 3.0 * baseH
 
   // ─── HERO & TRAVEL LOGIC ──────────────────────────────────────────────────
   const title = $('#hero-title')
@@ -136,8 +136,8 @@ onMounted(async () => {
         const titleX = isMobile ? 0 : baseW * 0.22
         const charX = isMobile ? 0 : -baseW * 0.18
         
-        // Character entry timing (moved much earlier to 0.45 to follow globe immediately)
-        const sceneStart = hh * 0.45
+        // Character entry synced to when globe finishes fading (0.38 start + 0.22 window = 0.60)
+        const sceneStart = hh * 0.60
         const sceneEnd = hh + (sh * 0.7)
         const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
         
@@ -153,13 +153,22 @@ onMounted(async () => {
           exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.4))
         }
 
+        // Bridge the scroll-based fade-out to the 3D canvas (crucial for mobile exit)
+        if (threeScene.value?.setOpacity) {
+          // On mobile (hh < 0.6*baseH is a proxy for mobile as we set it to 0.5), 
+          // we keep it solid and let the sticky behavior handle the exit.
+          const isMobile = hh < (0.6 * baseH)
+          threeScene.value.setOpacity(isMobile ? 1 : exitAlpha)
+        }
+
         // Title stays longer alone, then snaps away quickly while Drifting DOWN
-        // Shift window to 0.01 for "straight up disappear"
-        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.6) / 0.01))
+        // Final recalibration to exactly 70% as requested
+        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.7) / 0.01))
         
         // Rise back from below: add some positive offset to targetY when invisible
-        const activeY = (sceneP > 0.6) ? targetY + (1 - titleWorkstationFade) * baseH * 0.15 : yPos
-        const activeScale = (sceneP > 0.6) ? targetScale : curScale
+        // Match the 0.7 trigger for the final snap-away
+        const activeY = (sceneP > 0.7) ? targetY + (1 - titleWorkstationFade) * baseH * 0.15 : yPos
+        const activeScale = (sceneP > 0.7) ? targetScale : curScale
 
         gsap.set(title, {
           x: 0,
@@ -203,8 +212,8 @@ onMounted(async () => {
       }
 
       if (globeCanvas) {
-        // EXTENDED GLOBE EXIT: Fades out between 45% and 85% of hero height
-        const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh * 0.45) / (hh * 0.4)))
+        // Globe exit compressed to 0.22 window for faster handoff to character
+        const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh * 0.38) / (hh * 0.22)))
         globeCanvas.style.opacity = 1 - globeFadeP
         globeCanvas.style.pointerEvents = 'none'
       }
@@ -519,7 +528,8 @@ onUnmounted(() => {
         <span class="hero-letter">L</span>
         <span class="hero-letter">E</span>
       </h1>
-      <div id="partner-text">
+      <!-- Desktop only: Fixed overlay version -->
+      <div id="partner-text" class="desktop-only">
         <WhatIDo />
       </div>
     </div>
@@ -535,6 +545,13 @@ onUnmounted(() => {
         <ClientOnly>
           <Scene ref="threeScene" />
         </ClientOnly>
+      </div>
+    </section>
+
+    <!-- Mobile only: Dedicated scroll section -->
+    <section id="numbers-section" class="mobile-only">
+      <div class="numbers-screen">
+        <WhatIDo />
       </div>
     </section>
 
@@ -732,26 +749,60 @@ html { scroll-behavior: auto; }
 .btn-start { padding: 0.6rem 1.8rem; border-radius: 100px; font-weight: 600; cursor: pointer; color: #fff; background: rgba(0,80,40,0.85); border: 1.5px solid rgba(0,255,136,0.86); font-size: clamp(0.75rem, 2vw, 1rem); }
 .btn-login { padding: 0.6rem 1.8rem; border-radius: 100px; cursor: pointer; color: rgba(255,255,255,0.78); background: transparent; border: none; font-size: clamp(0.75rem, 2vw, 1rem); }
 
+.desktop-only { display: block !important; }
+.mobile-only { display: none !important; }
+
+@media (max-width: 1024px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: block !important; }
+}
+
 /* ── SECTIONS ─────────────────────────────────────────────────────────────── */
 #hero {
   position: relative;
   width: 100vw;
-  height: 400vh;
+  height: 120vh;
   background: #0a0d14;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+@media (max-width: 1024px) {
+  #hero {
+    height: 50vh; /* Faster mobile start */
+  }
+}
+
 .scene-wrapper {
   width: 100vw;
-  height: 400vh;
+  height: 300vh;
   position: relative;
   z-index: 5;
 }
 
 /* NUMBERS */
-#numbers-section { width: 100vw; min-height: 120vh; background: #0a0d14; display: flex; align-items: center; justify-content: center; padding: clamp(1rem, 5vw, 4rem); overflow: hidden; position: relative; z-index: 10; }
+#numbers-section { 
+  width: 100vw; 
+  min-height: 120vh; 
+  background: #0a0d14; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  padding: clamp(1rem, 5vw, 4rem); 
+  overflow: hidden; 
+  position: relative; 
+  z-index: 10; 
+}
+
+@media (max-width: 1024px) {
+  #numbers-section {
+    min-height: 100vh;
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+    overflow: visible;
+  }
+}
 .numbers-screen { 
   position: relative; 
   width: min(860px, 95vw); 

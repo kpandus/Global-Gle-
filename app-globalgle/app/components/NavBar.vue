@@ -47,7 +47,6 @@ const menuOpen = ref(false)
         <a href="#" class="drawer-link">About</a>
         <a href="#" class="drawer-link">Services</a>
         <a href="#" class="drawer-link">Portfolio</a>
-        <a href="#" class="drawer-link drawer-contact">Contact</a>
       </div>
     </Transition>
 
@@ -224,24 +223,25 @@ const menuOpen = ref(false)
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 
-/* Tablet + mobile (≤900px): collapse nav links, show hamburger */
+/* Tablet + mobile (≤900px): robust flex layout */
 @media (max-width: 900px) {
   #navbar {
     width: calc(100% - 2rem);
-    padding: 0 0.75rem 0 0.5rem;
-    grid-template-columns: auto 1fr auto;
+    padding: 0 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
+  .nav-center { display: none !important; }
   .nav-links-group { display: none; }
-  .nav-center { justify-content: center; }
-  .hamburger  { display: flex; }
+  .hamburger { display: flex; z-index: 100000; }
 }
 
 /* Mobile (≤768px): tighten sizing */
 @media (max-width: 768px) {
-  #navbar { width: calc(100% - 1.5rem); height: 50px; }
-  .logo-wrap, .nav-logo { width: 36px; height: 36px; }
+  #navbar { width: calc(100% - 1.5rem); height: 52px; padding: 0 0.8rem; }
+  .logo-wrap, .nav-logo { width: 38px; height: 38px; }
   .nav-contact-btn { font-size: 0.72rem; padding: 0.45rem 1rem; letter-spacing: 0.08em; }
-  .nav-brand { font-size: 0.85rem; letter-spacing: 0.04em; }
 }
 
 /* Small phones (≤480px) */

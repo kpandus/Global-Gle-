@@ -300,6 +300,6 @@
   .what-box { width: 100%; justify-content: flex-start; }
   .what-box h2 { margin-bottom: 2rem; }
   .what-box-in { height: auto; }
-  .what-content { width: 100%; height: auto; min-height: 250px; }
+  .what-content { width: 100%; height: auto; min-height: 250px; padding: 0; }
 }
 </style>
