@@ -302,15 +302,15 @@ onMounted(async () => {
         let soloOpacity = 0
         let s3p = 0 
 
-        if (p < 0.25) {
-          soloOpacity = Math.pow(p / 0.25, 2)
+        if (p < 0.15) {
+          soloOpacity = Math.pow(p / 0.15, 2)
           s3p = 0
-        } else if (p < 0.6) {
+        } else if (p < 0.35) {
           soloOpacity = 1
           s3p = 0
         } else {
           soloOpacity = 1
-          s3p = Math.min(1, (p - 0.6) / 0.4)
+          s3p = Math.min(1, (p - 0.35) / 0.35)
         }
         
         const s3e = Math.pow(s3p, 2)
@@ -380,9 +380,10 @@ onMounted(async () => {
             } else {
               child.visible = s3e > 0.001
               if (child.visible) {
-                child.material.transparent = s3e < 0.99
-                child.material.opacity = s3e
-                if (s3e > 0.99) child.material.depthWrite = true
+                const combinedAlpha = s3e * globalAlpha
+                child.material.transparent = combinedAlpha < 0.99
+                child.material.opacity = combinedAlpha
+                if (combinedAlpha > 0.99) child.material.depthWrite = true
               }
             }
           }

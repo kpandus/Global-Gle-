@@ -104,8 +104,8 @@ onMounted(async () => {
       }
 
       if (scrollY >= appearanceEnd) {
-        // Drastically reduced distance: docking now completes within the hero section (by 38% height)
-        const landingPoint = hh * 0.38
+        // Extended smoother docking: landingPoint increased to 0.7 for even more scroll distance
+        const landingPoint = hh * 0.7
         const journeyP = Math.min(1, (scrollY - appearanceEnd) / (landingPoint - appearanceEnd))
 
         // Unified Handheld Detection (Samsung + iPhone)
@@ -139,11 +139,11 @@ onMounted(async () => {
         }
 
         const titleX = isMobile ? 0 : baseW * 0.22
-        const charX = isMobile ? 0 : -baseW * 0.18
+        const charX = isMobile ? 0 : -baseW * 0.08
         
         // Character entry synced to when globe finishes fading (0.38 start + 0.22 window = 0.60)
-        // Character entry synced to start almost instantly (15% through hero)
-        const sceneStart = hh * 0.15 
+        // Character entry synced to start much faster (5% through hero)
+        const sceneStart = hh * 0.05 
         const sceneEnd = hh + (sh * 0.7)
         const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
         
@@ -152,11 +152,11 @@ onMounted(async () => {
           threeScene.value.setScrollProgress(sceneP)
         }
 
-        // Persistence logic: Stay for 0.2 screen heights as requested
-        const exitStart = sceneEnd + (baseH * 0.2) 
+        // Persistence logic: No buffer, fast exit as requested
+        const exitStart = sceneEnd
         let exitAlpha = 1
         if (scrollY > exitStart) {
-          exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.4))
+          exitAlpha = Math.max(0, 1 - (scrollY - exitStart) / (baseH * 0.12))
         }
 
         // Bridge the scroll-based fade-out to the 3D canvas (crucial for mobile exit)
@@ -169,12 +169,12 @@ onMounted(async () => {
 
         // Title stays longer alone, then snaps away quickly while Drifting DOWN
         // Final recalibration to exactly 70% as requested
-        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.7) / 0.01))
+        const titleWorkstationFade = Math.max(0, 1 - Math.max(0, (sceneP - 0.4) / 0.05))
         
         // Rise back from below: add some positive offset to targetY when invisible
-        // Match the 0.7 trigger for the final snap-away
-        const activeY = (sceneP > 0.7) ? targetY + (1 - titleWorkstationFade) * baseH * 0.15 : yPos
-        const activeScale = (sceneP > 0.7) ? targetScale : curScale
+        // Match the 0.4 trigger for the final snap-away
+        const activeY = (sceneP > 0.4) ? targetY + (1 - titleWorkstationFade) * baseH * 0.15 : yPos
+        const activeScale = (sceneP > 0.4) ? targetScale : curScale
 
         gsap.set(title, {
           x: 0,
@@ -185,8 +185,8 @@ onMounted(async () => {
           textShadow: `0 0 ${journeyP * 30}px rgba(0, 255, 136, ${0.4 + journeyP * 0.6})`
         })
 
-        // DELAYED STATEMENT: Starts appearing only after Title is gone (sceneP > 0.7)
-        const charShiftP = Math.max(0, (sceneP - 0.7) / 0.3)
+        // DELAYED STATEMENT: Starts appearing only after Title is gone (sceneP > 0.4)
+        const charShiftP = Math.max(0, (sceneP - 0.4) / 0.3)
         const charShiftE = Math.pow(charShiftP, 2)
         
         const curCharX = charShiftE * charX
@@ -219,7 +219,7 @@ onMounted(async () => {
 
       if (globeCanvas) {
         // Globe exit compressed to 0.22 window for faster handoff to character
-        const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh * 0.38) / (hh * 0.22)))
+        const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh * 0.55) / (hh * 0.18)))
         globeCanvas.style.opacity = 1 - globeFadeP
         globeCanvas.style.pointerEvents = 'none'
       }
@@ -748,7 +748,7 @@ html { scroll-behavior: auto; }
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 16rem;
+  top: 10.5rem;
   z-index: 101;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: max-content;
@@ -774,7 +774,7 @@ html { scroll-behavior: auto; }
 #hero {
   position: relative;
   width: 100vw;
-  height: 120vh;
+  height: 70vh;
   background: #0a0d14;
   display: flex;
   align-items: center;
