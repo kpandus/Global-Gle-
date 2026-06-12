@@ -42,7 +42,12 @@ onMounted(async () => {
   if (navBrand) gsap.set(navBrand, { opacity: 0 })
 
   // ─── ANIMATION CONSTANTS ─────────────────────────────────────────────────
-  const getHeroH = () => 0.5* baseH
+  const getHeroH = () => {
+    // If window is narrow (mobile), use a much smaller hero height (0.5) 
+    // to prevent "dead scroll" space. iPhone specifically needs this shorter.
+    const isSmall = window.innerWidth < 768
+    return (isSmall ? 0.45 : 0.8) * baseH
+  }
   const getSceneH = () => 3.0 * baseH
 
   // ─── HERO & TRAVEL LOGIC ──────────────────────────────────────────────────
@@ -137,7 +142,8 @@ onMounted(async () => {
         const charX = isMobile ? 0 : -baseW * 0.18
         
         // Character entry synced to when globe finishes fading (0.38 start + 0.22 window = 0.60)
-        const sceneStart = hh * 0.60
+        // Character entry synced to start almost instantly (15% through hero)
+        const sceneStart = hh * 0.15 
         const sceneEnd = hh + (sh * 0.7)
         const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
         
@@ -239,9 +245,9 @@ onMounted(async () => {
     onUpdate(self) {
       const p = self.progress
       
-      // PHASE 1: GRAVITY DROOP-DOWN (0.0 -> 0.2)
-      if (p < 0.2) {
-        const dropP = p / 0.2
+      // PHASE 1: GRAVITY DROOP-DOWN (0.0 -> 0.08)
+      if (p < 0.08) {
+        const dropP = p / 0.08
 
         gleWords.forEach((word, i) => {
           // Stagger: left first, mid second, right third
@@ -293,9 +299,9 @@ onMounted(async () => {
         gsap.set(footerContent, { opacity: 0 })
       }
 
-      // PHASE 2: W WIREFRAME FORMS — centred via wOverlay (0.20 → 0.44)
-      if (p >= 0.2 && p < 0.44) {
-        const morphP = (p - 0.2) / 0.24  // 0 → 1
+      // PHASE 2: W WIREFRAME FORMS — centred via wOverlay (0.08 → 0.20)
+      if (p >= 0.08 && p < 0.20) {
+        const morphP = (p - 0.08) / 0.12  // 0 → 1
 
         // All GLE words fade out (left first, mid last)
         gsap.set(sideGles[0], { opacity: Math.max(0, 1 - morphP * 2.8) })
@@ -317,9 +323,9 @@ onMounted(async () => {
         gsap.set(footerContent, { opacity: 0 })
       }
 
-      // PHASE 3: W FILLS SOLID PURPLE (0.44 → 0.62)
-      if (p >= 0.44 && p < 0.62) {
-        const fillP = (p - 0.44) / 0.18  // 0 → 1
+      // PHASE 3: W FILLS SOLID PURPLE (0.20 → 0.35)
+      if (p >= 0.20 && p < 0.35) {
+        const fillP = (p - 0.20) / 0.15  // 0 → 1
 
         gsap.set(sideGles, { opacity: 0 })
         gsap.set(gleMid, { opacity: 0 })
@@ -339,9 +345,9 @@ onMounted(async () => {
         gsap.set(footerContent, { opacity: 0 })
       }
 
-      // PHASE 4: W EXPANDS — FOOTER OPENS (0.62 → 1.0)
-      if (p >= 0.62) {
-        const expandP = Math.min(1, (p - 0.62) / 0.38)  // 0 → 1
+      // PHASE 4: W EXPANDS — FOOTER OPENS (0.35 → 1.0)
+      if (p >= 0.35) {
+        const expandP = Math.min(1, (p - 0.35) / 0.65)  // 0 → 1
         const ease = expandP * expandP * (3 - 2 * expandP)  // smoothstep
 
         gsap.set(sideGles, { opacity: 0 })
@@ -664,7 +670,7 @@ html { scroll-behavior: auto; }
   background: #0a0d14;
   color: #fff;
   font-family: 'Urbanist', sans-serif;
-  overflow-x: hidden;
+  overflow-x: hidden !important;
 }
 
 /* ── UI LAYER ─────────────────────────────────────────────────────────────── */
@@ -695,6 +701,13 @@ html { scroll-behavior: auto; }
   text-align: center;
   line-height: 1.1;
   padding: 0 5vw;
+}
+
+@media (max-width: 768px) {
+  #hero-title {
+    top: 42%; /* Moved down slightly from 32% for better mobile balance */
+    font-size: clamp(2.2rem, 9vw, 3.5rem);
+  }
 }
 
 #partner-text {
@@ -858,7 +871,7 @@ html { scroll-behavior: auto; }
   z-index: 0;
 }
 @media (max-width: 768px) {
-  #faq-section { padding: 4rem 6vw; }
+  #faq-section { padding: 4rem 6vw; overflow: hidden; }
   .faq-bg-text { font-size: 15rem; top: 60%; }
 }
 /* Push all FAQ content above the watermark */
@@ -875,7 +888,7 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 140vh;
+  height: 110vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
   z-index: 30;
   margin-top: 0;
 }

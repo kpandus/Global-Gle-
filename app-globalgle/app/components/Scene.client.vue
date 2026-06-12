@@ -80,12 +80,14 @@ function setLighting(scene) {
 const getDisplayMode = () => {
   if (typeof window === 'undefined') return { isDesktop: true, isMobile: false }
   
-  const isAndroid = /Android/i.test(navigator.userAgent)
+  // Restore full cinematic (workstation/laptop) for all devices, including iPhone
+  // We only distinguish for camera framing and scale adjustments
   const isLargeScreen = window.innerWidth > 1024
+  const isAndroid = /Android/i.test(navigator.userAgent)
+  const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent)
   
-  // Specific request: Android devices show the desktop view (with laptop)
-  const isDesktop = isLargeScreen || isAndroid
-  return { isDesktop, isMobile: !isDesktop }
+  const isDesktop = isLargeScreen || isAndroid || isIPhone // All high-end handhelds get the full view
+  return { isDesktop, isMobile: window.innerWidth < 768 }
 }
 
 onMounted(async () => {
@@ -410,7 +412,7 @@ onMounted(async () => {
           }
         }
       } else {
-        // Mobile: include globalAlpha for the exit transition
+        // Fallback for very small non-high-end devices if they ever hit this
         const easedP = Math.pow(p, 3)
         const alpha = easedP * globalAlpha
         const scaleVal = baseScale + (easedP * (1.0 - baseScale))

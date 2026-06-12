@@ -1,6 +1,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useHead } from '#imports'
 import Loader from '~/components/Loader.client.vue'
+
+useHead({
+  meta: [
+    { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=5' }
+  ]
+})
 
 const loading  = ref(true)
 const progress = ref(0)
