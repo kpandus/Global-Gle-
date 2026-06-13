@@ -889,7 +889,7 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 100vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
+  height: 110vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
   z-index: 30;
 }
 
