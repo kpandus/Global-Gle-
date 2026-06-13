@@ -889,8 +889,8 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 110vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
-  margin-top: -50px; /* pulls it closer to FAQ */
+  height: 105vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
+  margin-top: -70px; /* pulls it closer to FAQ */
   z-index: 30;
   margin-top: 0;
 }
@@ -899,7 +899,7 @@ html { scroll-behavior: auto; }
   position: sticky;
   top: 0;
   width: 100vw;
-  height: 100vh;
+  height: 90vh;
   background: #0a0d14;
   overflow: hidden;
   display: block;
