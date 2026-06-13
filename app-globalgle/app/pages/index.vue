@@ -892,7 +892,6 @@ html { scroll-behavior: auto; }
   height: 105vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
   margin-top: -70px; /* pulls it closer to FAQ */
   z-index: 30;
-  margin-top: 0;
 }
 
 #footer-sticky-wrap {
