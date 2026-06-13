@@ -848,7 +848,7 @@ html { scroll-behavior: auto; }
 #faq-section { 
   width: 100vw; 
   background: #0a0d14;  
-  padding: clamp(2rem, 5vw, 4rem) 5vw 0;
+  padding: clamp(2rem, 5vw, 4rem) 6vw 0;
   position: relative; 
   z-index: 10; 
   overflow: hidden; 
