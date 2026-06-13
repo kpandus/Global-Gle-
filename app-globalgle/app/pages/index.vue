@@ -705,7 +705,7 @@ html { scroll-behavior: auto; }
 
 @media (max-width: 768px) {
   #hero-title {
-    top: 42%; /* Moved down slightly from 32% for better mobile balance */
+    top: 38%; /* Moved down slightly from 32% for better mobile balance */
     font-size: clamp(2.2rem, 9vw, 3.5rem);
   }
 }
@@ -850,6 +850,7 @@ html { scroll-behavior: auto; }
   background: #0a0d14;  
   padding: clamp(2rem, 5vw, 4rem) 6vw 0;
   position: relative; 
+  padding-bottom: 0;
   z-index: 10; 
   overflow: hidden; 
 }
@@ -888,7 +889,8 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 50vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
+  height: 90vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
+  margin-top: -50px; /* pulls it closer to FAQ */
   z-index: 30;
   margin-top: 0;
 }
