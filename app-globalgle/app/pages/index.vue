@@ -847,8 +847,8 @@ html { scroll-behavior: auto; }
 /* FAQ */
 #faq-section { 
   width: 100vw; 
-  background: #0a0d14; 
-  padding: clamp(2rem, 5vw, 4rem) 5vw clamp(1rem, 3vw, 2rem); 
+  background: #0a0d14;  
+  padding: clamp(2rem, 5vw, 4rem) 5vw 0;
   position: relative; 
   z-index: 10; 
   overflow: hidden; 
@@ -888,7 +888,7 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 110vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
+  height: 50vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
   z-index: 30;
   margin-top: 0;
 }
@@ -1173,7 +1173,7 @@ html { scroll-behavior: auto; }
 /* Mobile (≤768px) */
 @media (max-width: 768px) {
   /* Hero */
-  #hero-title { font-size: clamp(1.9rem, 7vw, 3.2rem); padding: 0 4vw; }
+  #hero-title { font-size: clamp(3.9rem, 7vw, 3.2rem); padding: 0 4vw; }
   .btn-start, .btn-login { padding: 0.65rem 1.4rem; font-size: 0.88rem; }
 
   /* FAQ */
