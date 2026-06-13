@@ -850,7 +850,7 @@ html { scroll-behavior: auto; }
   background: #0a0d14;  
   padding: clamp(2rem, 5vw, 4rem) 6vw 0;
   position: relative; 
-  padding-bottom: 0;
+  padding-bottom: 10rem;
   z-index: 10; 
   overflow: hidden; 
 }
@@ -889,8 +889,7 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 105vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
-  margin-top: -70px; /* pulls it closer to FAQ */
+  height: 100vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
   z-index: 30;
 }
 
@@ -898,7 +897,7 @@ html { scroll-behavior: auto; }
   position: sticky;
   top: 0;
   width: 100vw;
-  height: 90vh;
+  height: 100vh;
   background: #0a0d14;
   overflow: hidden;
   display: block;
