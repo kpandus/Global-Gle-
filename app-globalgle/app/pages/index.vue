@@ -889,7 +889,7 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 90vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
+  height: 110vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
   margin-top: -50px; /* pulls it closer to FAQ */
   z-index: 30;
   margin-top: 0;
