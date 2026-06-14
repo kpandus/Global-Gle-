@@ -80,7 +80,6 @@ onMounted(async () => {
       if (isMobile) {
         if (globeCanvas) globeCanvas.style.display = 'none'
         if (title) gsap.set(title, { opacity: 0, display: 'none' })
-        if (btns) gsap.set(btns, { display: 'none' })
       }
 
       const hh = getHeroH()
@@ -93,10 +92,15 @@ onMounted(async () => {
 
       const appearanceStart = hh * 0.2
       const appearanceEnd = hh * 0.3
-      const btnsEnd = appearanceEnd + baseH // Stay 1 screen height longer
-
-      if (scrollY < btnsEnd) {
+      // Mobile-specific faster fade out for CTA buttons
+      const btnsFadeEnd = isMobile ? (baseH * 0.6) : (appearanceEnd + baseH)
+      const btnsFadeStart = isMobile ? (baseH * 0.3) : (btnsFadeEnd - 100) // sharp fade on desktop if needed
+      
+      if (scrollY < btnsFadeStart) {
         gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
+      } else if (scrollY < btnsFadeEnd) {
+        const p = (scrollY - btnsFadeStart) / (btnsFadeEnd - btnsFadeStart)
+        gsap.set(btns, { opacity: 1 - p, pointerEvents: p > 0.5 ? 'none' : 'all' })
       } else {
         gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
       }
@@ -566,7 +570,7 @@ onUnmounted(() => {
     <NavBar/>
 
     <div class="fixed-ui-layer">
-      <div class="hero-btns desktop-only">
+      <div class="hero-btns">
         <button class="btn-start">Get Started</button>
         <button class="btn-login">Login</button>
       </div>
@@ -807,14 +811,14 @@ html { scroll-behavior: auto; }
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 10.5rem;
+  top: 9rem;
   z-index: 101;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: max-content;
 }
 @media (max-width: 768px) {
   .hero-btns {
-    top: 30%;
+    top: 27%; /* Final adjustment requested by the user */
     bottom: auto;
   }
 }
