@@ -856,6 +856,11 @@ html { scroll-behavior: auto; }
   position: relative;
   z-index: 5;
 }
+@media (max-width: 768px) {
+  .scene-wrapper {
+    height: 150vh;
+  }
+}
 
 /* MOBILE TRADITIONAL FLOW */
 #mobile-traditional-hero {
@@ -912,7 +917,7 @@ html { scroll-behavior: auto; }
 }
 
 #mobile-glass-box {
-  padding: 2rem 1.5rem 8rem;
+  padding: 2rem 1.5rem 2rem;
   background: #0a0d14;
 }
 
@@ -1443,6 +1448,15 @@ html { scroll-behavior: auto; }
   #faq-section { padding: 2.5rem 3.5vw; }
   .faq-q { font-size: 0.82rem; }
   .faq-item { padding: 0.9rem 0.8rem; }
+
+  #footer-content { padding: 1.5rem 3.5vw 1rem; }
+  .footer-logo { font-size: 1.3rem; }
+  .legal-left { font-size: 0.65rem; }
+  #w-overlay { font-size: 50vw; }
+  
+}
+</style>
+em 0.8rem; }
 
   #footer-content { padding: 1.5rem 3.5vw 1rem; }
   .footer-logo { font-size: 1.3rem; }
