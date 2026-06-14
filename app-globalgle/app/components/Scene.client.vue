@@ -296,7 +296,7 @@ onMounted(async () => {
 
       const p = targetP // Uses scrubbed value from main page
       const { isDesktop: desktopModeNow } = getDisplayMode()
-      const baseScale = desktopModeNow ? 0.4 : 0.45
+      const baseScale = desktopModeNow ? 0.4 : 0.4
 
       if (desktopModeNow) {
         let soloOpacity = 0
@@ -340,7 +340,9 @@ onMounted(async () => {
         // Character Transform: Restore shrinking scale to fit the framing
         const currentBaseScale = 1.0 - (s3e * 0.15)
         const scaleVal = (baseScale + (soloOpacity * (1.0 - baseScale))) * currentBaseScale
-        character.scale.set(scaleVal, scaleVal, scaleVal)
+        // Simplified scaling: apply a direct multiplier ONLY on mobile (Reduced further for impact)
+        const finalScale = desktopModeNow ? scaleVal : scaleVal * 0.4
+        character.scale.set(finalScale, finalScale, finalScale)
         character.position.x = 0
         character.rotation.y = s3e * 0.6
 
@@ -413,17 +415,41 @@ onMounted(async () => {
           }
         }
       } else {
-        // Fallback for very small non-high-end devices if they ever hit this
-        const easedP = Math.pow(p, 3)
+        // MOBILE / IPHONE FLOW
+        const easedP = Math.pow(p, 3) 
         const alpha = easedP * globalAlpha
-        const scaleVal = baseScale + (easedP * (1.0 - baseScale))
-        character.scale.set(scaleVal, scaleVal, scaleVal)
+        
+        // Cumulative scale: lerp from baseScale to 1.0, then apply mobile multiplier (0.35 for extreme impact)
+        let sVal = (baseScale + (easedP * (1.0 - baseScale))) * 0.35
+        
+        // Ensure character is centered and correctly positioned
+        character.scale.set(sVal, sVal, sVal)
+        character.position.x = 0
+        character.position.y = 0 
+        character.rotation.y = 0
+        
         character.traverse(child => {
-          if (child.isMesh && child.visible && child.material) {
-            child.material.transparent = true
-            child.material.opacity = alpha
+          if (child.isMesh && child.material) {
+            // Whitelist check for character only on mobile
+            const n = child.name.toLowerCase()
+            const isChar = n.includes('body') || n.includes('head') || n.includes('shirt') || 
+                           n.includes('pant') || n.includes('shoe') || n.includes('hair') || 
+                           n.includes('skin') || n.includes('eye') || n.includes('hand') || 
+                           n.includes('male') || n.includes('avatar')
+            
+            if (isChar) {
+              child.visible = true
+              child.material.transparent = true
+              child.material.opacity = alpha
+            } else {
+              child.visible = false
+            }
           }
         })
+        
+        // Simple camera framing for mobile
+        camera.position.set(0, 14, 28)
+        camera.lookAt(0, 10, 0)
       }
 
       renderer.render(scene, camera)

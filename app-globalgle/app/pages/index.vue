@@ -76,6 +76,13 @@ onMounted(async () => {
       const isDesktopView = isLargeScreen || isAndroid
       const isMobile = !isDesktopView
 
+      // On mobile, force hide globe and desktop title
+      if (isMobile) {
+        if (globeCanvas) globeCanvas.style.display = 'none'
+        if (title) gsap.set(title, { opacity: 0, display: 'none' })
+        if (btns) gsap.set(btns, { display: 'none' })
+      }
+
       const hh = getHeroH()
       const sh = getSceneH()
 
@@ -142,9 +149,11 @@ onMounted(async () => {
         const charX = isMobile ? 0 : -baseW * 0.08
         
         // Character entry synced to when globe finishes fading (0.38 start + 0.22 window = 0.60)
-        // Character entry synced to start much faster (5% through hero)
-        const sceneStart = hh * 0.05 
-        const sceneEnd = hh + (sh * 0.7)
+        // On mobile, the scene should start appearing later, after ALL traditional sections
+        // Welcome (100vh) + Text Info (~800px) + Glass Box (~700px)
+        const mOffset = isMobile ? (baseH + 1500) : 0 
+        const sceneStart = (hh * 0.05) + mOffset
+        const sceneEnd = hh + (sh * 0.7) + mOffset
         const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
         
         // Pass the pre-smoothed (scrubbed) progress to the 3D scene
@@ -217,7 +226,7 @@ onMounted(async () => {
         if (navBrand) gsap.set(navBrand, { opacity: 0 })
       }
 
-      if (globeCanvas) {
+      if (globeCanvas && !isMobile) {
         // Globe exit compressed to 0.22 window for faster handoff to character
         const globeFadeP = Math.min(1, Math.max(0, (scrollY - hh * 0.55) / (hh * 0.18)))
         globeCanvas.style.opacity = 1 - globeFadeP
@@ -241,7 +250,7 @@ onMounted(async () => {
     trigger: footerSec,
     start: 'top top',
     end: 'bottom bottom',
-    scrub: 1.2,
+    scrub: 1.6,
     onUpdate(self) {
       const p = self.progress
       
@@ -503,6 +512,45 @@ onMounted(async () => {
     cleanupFns.push(() => btn.removeEventListener('click', handler))
   })
 
+  // ─── MOBILE ENTRANCE & GLASS BOX ANIMATIONS ─────────────────────────────
+  const isLargeScreenInit = window.matchMedia("(min-width: 1025px)").matches
+  const isAndroidInit = /Android/i.test(navigator.userAgent)
+  if (!(isLargeScreenInit || isAndroidInit)) {
+    // Punchy Entrance
+    gsap.from('#mobile-traditional-hero h1', {
+      opacity: 0,
+      y: 60,
+      duration: 1.4,
+      ease: 'power4.out',
+      delay: 0.3
+    })
+    gsap.from('#mobile-traditional-hero p', {
+      opacity: 0,
+      y: 20,
+      duration: 1.2,
+      ease: 'power3.out',
+      delay: 0.7
+    })
+  }
+
+  // Glass Box Slide-In
+  const glassBox = $('#mobile-glass-box')
+  if (glassBox) {
+    ScrollTrigger.create({
+      trigger: glassBox,
+      start: 'top 95%',
+      end: 'top 60%',
+      scrub: 1.2,
+      onUpdate(self) {
+        gsap.set(glassBox, {
+          opacity: self.progress,
+          x: (1 - self.progress) * 40,
+          scale: 0.96 + self.progress * 0.04
+        })
+      }
+    })
+  }
+
 }) // ← onMounted closes here ✅
 
 onUnmounted(() => {
@@ -518,7 +566,7 @@ onUnmounted(() => {
     <NavBar/>
 
     <div class="fixed-ui-layer">
-      <div class="hero-btns">
+      <div class="hero-btns desktop-only">
         <button class="btn-start">Get Started</button>
         <button class="btn-login">Login</button>
       </div>
@@ -540,10 +588,50 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <section id="hero">
+    <section id="hero" class="desktop-only">
       <ClientOnly>
         <Earth ref="threeEarth" />
       </ClientOnly>
+    </section>
+
+    <!-- Mobile Traditional Hero Flow -->
+    <section id="mobile-traditional-hero" class="mobile-only">
+      <div class="m-hero-content">
+        <h1>WELCOME TO <span class="highlight">GLOBAL GLE</span></h1>
+        <p>Modern cross-border payment infrastructure for the global economy.</p>
+        <div class="m-scroll-indicator">Scroll to explore ↓</div>
+      </div>
+    </section>
+
+    <section id="mobile-traditional-info" class="mobile-only">
+      <div class="m-info-block">
+        <h3>About Global GLE</h3>
+        <p>We build high-performance infrastructure for organizations to move money across borders with zero friction. Built for speed, compliance, and scale.</p>
+      </div>
+      <div class="m-info-block">
+        <h3>Primary Services</h3>
+        <ul class="m-service-list">
+          <li>
+            <strong>Real-time Settlements</strong>
+            <span>Direct integration with local payment rails in 120+ countries.</span>
+          </li>
+          <li>
+            <strong>Compliance Engine</strong>
+            <span>Automated AML/KYC screening embedded at the protocol level.</span>
+          </li>
+          <li>
+            <strong>Unified Treasury</strong>
+            <span>Multi-currency liquidity pools with instant FX conversion.</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Mobile Glass Box Component (BEFORE Character) -->
+    <section id="mobile-glass-box" class="mobile-only">
+      <div class="glass-container">
+        <WhatIDo />
+      </div>
     </section>
 
     <section>
@@ -554,12 +642,7 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- Mobile only: Dedicated scroll section -->
-    <section id="numbers-section" class="mobile-only">
-      <div class="numbers-screen">
-        <WhatIDo />
-      </div>
-    </section>
+    <!-- Removed redundant mobile-only numbers-section to follow traditional landing page style -->
 
    
    <section id="faq-section">
@@ -794,6 +877,120 @@ html { scroll-behavior: auto; }
   z-index: 5;
 }
 
+/* MOBILE TRADITIONAL FLOW */
+#mobile-traditional-hero {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  background: radial-gradient(circle at center, #101a28 0%, #0a0d14 100%);
+}
+
+.m-hero-content h1 {
+  font-size: clamp(2.5rem, 12vw, 4rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.03em;
+}
+
+.m-hero-content .highlight {
+  color: #00ff88;
+  display: block;
+}
+
+.m-hero-content p {
+  font-size: 1.2rem;
+  font-weight: 300;
+  opacity: 0.8;
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.m-scroll-indicator {
+  margin-top: 4rem;
+  font-size: 0.9rem;
+  opacity: 0.4;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: mBounce 2s infinite;
+}
+
+@keyframes mBounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+
+#mobile-traditional-info {
+  padding: 6rem 2rem;
+  background: #0a0d14;
+}
+
+#mobile-glass-box {
+  padding: 2rem 1.5rem 8rem;
+  background: #0a0d14;
+}
+
+.glass-container {
+  background: rgba(10, 13, 20, 0.6);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 32px;
+  padding: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.m-info-block {
+  margin-bottom: 5rem;
+}
+
+.m-info-block h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: #00ff88;
+  margin-bottom: 2rem;
+  opacity: 0.8;
+}
+
+.m-info-block p {
+  font-size: 1.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.m-service-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.m-service-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.m-service-list strong {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.m-service-list span {
+  font-size: 1rem;
+  font-weight: 300;
+  opacity: 0.6;
+  line-height: 1.6;
+}
+
 /* NUMBERS */
 #numbers-section { 
   width: 100vw; 
@@ -872,7 +1069,7 @@ html { scroll-behavior: auto; }
   z-index: 0;
 }
 @media (max-width: 768px) {
-  #faq-section { padding: 4rem 6vw; overflow: hidden; }
+  #faq-section { padding: 4rem 6vw 0; overflow: hidden; }
   .faq-bg-text { font-size: 15rem; top: 60%; }
 }
 /* Push all FAQ content above the watermark */
@@ -889,8 +1086,13 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 110vh; /* Balanced at 110vh for perfect timing and 'W' visibility */
+  height: 120vh; /* Increased height to slow down the reveal speed */
   z-index: 30;
+}
+@media (max-width: 1024px) {
+  #footer-reveal-section {
+    margin-top: -8rem; /* Pull up more on mobile to reduce gap while keeping height for animation */
+  }
 }
 
 #footer-sticky-wrap {
