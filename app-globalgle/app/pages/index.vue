@@ -48,7 +48,7 @@ onMounted(async () => {
     const isSmall = window.innerWidth < 768
     return (isSmall ? 0.45 : 0.8) * baseH
   }
-  const getSceneH = () => 3.0 * baseH
+  const getSceneH = () => (window.innerWidth < 768 ? 1.5 : 3.0) * baseH
 
   // ─── HERO & TRAVEL LOGIC ──────────────────────────────────────────────────
   const title = $('#hero-title')
@@ -71,15 +71,18 @@ onMounted(async () => {
     onUpdate: (self) => {
       const scrollY = self.scroll()
       
-      const isAndroid = /Android/i.test(navigator.userAgent)
       const isLargeScreen = window.matchMedia("(min-width: 1025px)").matches
-      const isDesktopView = isLargeScreen || isAndroid
-      const isMobile = !isDesktopView
+      const isMobile = !isLargeScreen
+      const isAndroid = /Android/i.test(navigator.userAgent)
+      // Android phones should use mobile UI/hiding logic
+      const isDesktopView = isLargeScreen 
 
       // On mobile, force hide globe and desktop title
       if (isMobile) {
         if (globeCanvas) globeCanvas.style.display = 'none'
-        if (title) gsap.set(title, { opacity: 0, display: 'none' })
+        if (title) {
+          gsap.set(title, { opacity: 0, display: 'none', visibility: 'hidden' })
+        }
       }
 
       const hh = getHeroH()
@@ -92,17 +95,25 @@ onMounted(async () => {
 
       const appearanceStart = hh * 0.2
       const appearanceEnd = hh * 0.3
-      // Mobile-specific faster fade out for CTA buttons
-      const btnsFadeEnd = isMobile ? (baseH * 0.6) : (appearanceEnd + baseH)
-      const btnsFadeStart = isMobile ? (baseH * 0.3) : (btnsFadeEnd - 100) // sharp fade on desktop if needed
-      
-      if (scrollY < btnsFadeStart) {
-        gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
-      } else if (scrollY < btnsFadeEnd) {
-        const p = (scrollY - btnsFadeStart) / (btnsFadeEnd - btnsFadeStart)
-        gsap.set(btns, { opacity: 1 - p, pointerEvents: p > 0.5 ? 'none' : 'all' })
+      if (isMobile) {
+        // Buttons appear ONLY after passing the Welcome section (100vh)
+        if (scrollY < baseH) {
+          gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
+        } else {
+          const appearP = Math.min(1, (scrollY - baseH) / 200)
+          gsap.set(btns, { opacity: appearP, pointerEvents: appearP > 0.5 ? 'all' : 'none' })
+        }
       } else {
-        gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
+        const btnsFadeEnd = appearanceEnd + baseH
+        const btnsFadeStart = btnsFadeEnd - 100
+        if (scrollY < btnsFadeStart) {
+          gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
+        } else if (scrollY < btnsFadeEnd) {
+          const p = (scrollY - btnsFadeStart) / (btnsFadeEnd - btnsFadeStart)
+          gsap.set(btns, { opacity: 1 - p, pointerEvents: p > 0.5 ? 'none' : 'all' })
+        } else {
+          gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
+        }
       }
 
       if (scrollY < appearanceStart) {
@@ -155,7 +166,7 @@ onMounted(async () => {
         // Character entry synced to when globe finishes fading (0.38 start + 0.22 window = 0.60)
         // On mobile, the scene should start appearing later, after ALL traditional sections
         // Welcome (100vh) + Text Info (~800px) + Glass Box (~700px)
-        const mOffset = isMobile ? (baseH + 1500) : 0 
+        const mOffset = 0 
         const sceneStart = (hh * 0.05) + mOffset
         const sceneEnd = hh + (sh * 0.7) + mOffset
         const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
@@ -861,6 +872,11 @@ html { scroll-behavior: auto; }
     height: 150vh;
   }
 }
+@media (max-width: 768px) {
+  .scene-wrapper {
+    height: 150vh;
+  }
+}
 
 /* MOBILE TRADITIONAL FLOW */
 #mobile-traditional-hero {
@@ -1448,15 +1464,6 @@ html { scroll-behavior: auto; }
   #faq-section { padding: 2.5rem 3.5vw; }
   .faq-q { font-size: 0.82rem; }
   .faq-item { padding: 0.9rem 0.8rem; }
-
-  #footer-content { padding: 1.5rem 3.5vw 1rem; }
-  .footer-logo { font-size: 1.3rem; }
-  .legal-left { font-size: 0.65rem; }
-  #w-overlay { font-size: 50vw; }
-  
-}
-</style>
-em 0.8rem; }
 
   #footer-content { padding: 1.5rem 3.5vw 1rem; }
   .footer-logo { font-size: 1.3rem; }
