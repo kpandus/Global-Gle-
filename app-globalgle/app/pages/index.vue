@@ -603,30 +603,6 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <section id="mobile-traditional-info" class="mobile-only">
-      <div class="m-info-block">
-        <h3>About Global GLE</h3>
-        <p>We build high-performance infrastructure for organizations to move money across borders with zero friction. Built for speed, compliance, and scale.</p>
-      </div>
-      <div class="m-info-block">
-        <h3>Primary Services</h3>
-        <ul class="m-service-list">
-          <li>
-            <strong>Real-time Settlements</strong>
-            <span>Direct integration with local payment rails in 120+ countries.</span>
-          </li>
-          <li>
-            <strong>Compliance Engine</strong>
-            <span>Automated AML/KYC screening embedded at the protocol level.</span>
-          </li>
-          <li>
-            <strong>Unified Treasury</strong>
-            <span>Multi-currency liquidity pools with instant FX conversion.</span>
-          </li>
-        </ul>
-      </div>
-    </section>
-
     <!-- Mobile Glass Box Component (BEFORE Character) -->
     <section id="mobile-glass-box" class="mobile-only">
       <div class="glass-container">
