@@ -567,6 +567,11 @@ onMounted(async () => {
     })
   }
 
+  // Ensure ScrollTrigger is aware of final heights after character/content finishes loading
+  setTimeout(() => {
+    ScrollTrigger.refresh()
+  }, 1500)
+
 }) // ← onMounted closes here ✅
 
 onUnmounted(() => {
@@ -1081,7 +1086,7 @@ html { scroll-behavior: auto; }
     margin-right: auto;
   }
   
-  #faq-section { padding: 4rem 6vw 0; overflow: hidden; }
+  #faq-section { padding: 4rem 6vw 0; overflow: hidden; padding-bottom: 4rem; }
   .faq-bg-text { font-size: 15rem; top: 60%; }
 }
 /* Push all FAQ content above the watermark */
@@ -1098,12 +1103,12 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 90vh; /* Increased 120 height to slow down the reveal speed */
+  height: 180vh; /* Increased significantly to ensure top top trigger can be reached and to provide more scroll runway */
   z-index: 30;
 }
 @media (max-width: 1024px) {
   #footer-reveal-section {
-    margin-top: -8rem; /* Pull up more on mobile to reduce gap while keeping height for animation */
+    margin-top: -4rem; /* Subtle pull-up to reduce gap without breaking the scroll trigger */
   }
 }
 

@@ -78,16 +78,14 @@ function setLighting(scene) {
 }
 
 const getDisplayMode = () => {
-  if (typeof window === 'undefined') return { isDesktop: true, isMobile: false }
+  if (typeof window === 'undefined') return { isDesktop: true, isMobile: false, isLargeScreen: true }
   
-  // Restore full cinematic (workstation/laptop) for all devices, including iPhone
-  // We only distinguish for camera framing and scale adjustments
   const isLargeScreen = window.innerWidth > 1024
   const isAndroid = /Android/i.test(navigator.userAgent)
   const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent)
   
-  const isDesktop = isLargeScreen || isAndroid || isIPhone // All high-end handhelds get the full view
-  return { isDesktop, isMobile: window.innerWidth < 768 }
+  const isDesktop = isLargeScreen || isAndroid || isIPhone
+  return { isDesktop, isMobile: window.innerWidth < 768, isLargeScreen }
 }
 
 onMounted(async () => {
@@ -295,7 +293,7 @@ onMounted(async () => {
       }
 
       const p = targetP // Uses scrubbed value from main page
-      const { isDesktop: desktopModeNow } = getDisplayMode()
+      const { isDesktop: desktopModeNow, isLargeScreen } = getDisplayMode()
       const baseScale = desktopModeNow ? 0.4 : 0.4
 
       if (desktopModeNow) {
@@ -334,16 +332,19 @@ onMounted(async () => {
         camera.position.set(0, camY, camZ)
         
         // Restore lower lookY to focus on the workstation and full body (shoes)
-        const lookY = 14.2 - (s3e * 6.7)
+        // On mobile, we look slightly higher to center the character better in the tall viewport
+        const lookYBase = 14.2 - (s3e * 6.7)
+        const lookY = isLargeScreen ? lookYBase : lookYBase - 1.2
         camera.lookAt(0, lookY, 0)
 
         // Character Transform: Restore shrinking scale to fit the framing
         const currentBaseScale = 1.0 - (s3e * 0.15)
         const scaleVal = (baseScale + (soloOpacity * (1.0 - baseScale))) * currentBaseScale
-        // Simplified scaling: apply a direct multiplier ONLY on mobile (Reduced further for impact)
-        const finalScale = desktopModeNow ? scaleVal : scaleVal * 0.4
+        
+        // Subtle reduction multiplier for mobile devices (Android/iPhone)
+        const finalScale = isLargeScreen ? scaleVal : scaleVal * 0.85
         character.scale.set(finalScale, finalScale, finalScale)
-        character.position.x = 0
+        character.position.x = isLargeScreen ? 0 : -0.8
         character.rotation.y = s3e * 0.6
 
         // Materials & Visibility
@@ -415,16 +416,16 @@ onMounted(async () => {
           }
         }
       } else {
-        // MOBILE / IPHONE FLOW
+        // MOBILE / IPHONE FLOW (Safety fallback)
         const easedP = Math.pow(p, 3) 
         const alpha = easedP * globalAlpha
         
-        // Cumulative scale: lerp from baseScale to 1.0, then apply mobile multiplier (0.35 for extreme impact)
-        let sVal = (baseScale + (easedP * (1.0 - baseScale))) * 0.35
+        // Cumulative scale: lerp from baseScale to 1.0, then apply subtle mobile multiplier (e.g. 0.85)
+        let sVal = (baseScale + (easedP * (1.0 - baseScale))) * 0.85
         
         // Ensure character is centered and correctly positioned
         character.scale.set(sVal, sVal, sVal)
-        character.position.x = 0
+        character.position.x = -0.8
         character.position.y = 0 
         character.rotation.y = 0
         
@@ -447,16 +448,15 @@ onMounted(async () => {
           }
         })
         
-        // Simple camera framing for mobile
+        // Improved camera framing for mobile to ensure proper centering
         camera.position.set(0, 14, 28)
-        camera.lookAt(0, 10, 0)
+        camera.lookAt(0, 8.5, 0)
       }
 
       renderer.render(scene, camera)
     }
     animateLoop()
 
-    cleanupFns.push(() => window.removeEventListener('scroll', handleReveal))
     URL.revokeObjectURL(blobUrl)
     dracoLoader.dispose()
   } catch (err) {
