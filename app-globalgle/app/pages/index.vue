@@ -1210,6 +1210,7 @@ html { scroll-behavior: auto; }
   height: 36px;
   border-radius: 50%;
   border: 1px solid rgba(255,255,255,0.12);
+  color: #fff; /* Ensure icon glyphs are white */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1419,14 +1420,14 @@ html { scroll-behavior: auto; }
   .footer-top {
     flex-direction: column;
     justify-content: flex-start;
-    align-items: flex-start; /* Ensure items don't stretch horizontally if not needed */
-    gap: 0.4rem; /* Minimal gap */
-    padding-bottom: 1rem;
+    align-items: flex-start;
+    gap: 1.4rem; /* Slightly increased gap as requested */
+    padding-bottom: 1.5rem;
   }
-  .footer-brand { min-width: 100%; flex: none; margin-bottom: 0.2rem; }
-  .footer-desc { max-width: 100%; font-size: 0.9rem; margin-bottom: 0.4rem; line-height: 1.35; }
-  .nav-group { min-width: unset; flex: none; gap: 0.4rem; }
-  .footer-logo { font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .footer-brand { min-width: 100%; flex: none; margin-bottom: 0.6rem; }
+  .footer-desc { max-width: 100%; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.4; }
+  .nav-group { min-width: unset; flex: none; gap: 0.6rem; }
+  .footer-logo { font-size: 1.6rem; margin-bottom: 0.6rem; }
 
   /* Footer nav groups — row layout so Quick Links & Contact sit side by side */
   /* Removed flex-basis: 45% as it can cause weird stretching in column layout */
@@ -1448,8 +1449,8 @@ html { scroll-behavior: auto; }
 
   /* Footer content alignment — switch to top on mobile to prevent overflow */
   #footer-content {
-    align-items: center; /* Balanced position: pushed down but not at the bottom */
-    padding: 3rem 5vw 2.5rem;
+    align-items: center; 
+    padding: 3rem 5vw 0rem; /* Removed bottom padding to eliminate excess space as requested */
   }
 
   /* GLE / W overlay */
