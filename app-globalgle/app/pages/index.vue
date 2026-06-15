@@ -884,8 +884,9 @@ html { scroll-behavior: auto; }
 
 /* MOBILE TRADITIONAL FLOW */
 #mobile-traditional-hero {
-  height: 100vh;
+  height: 84vh;
   width: 100vw;
+  margin-top: 80px:
   display: flex;
   align-items: center;
   justify-content: center;
