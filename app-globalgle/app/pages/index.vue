@@ -742,25 +742,6 @@ onUnmounted(() => {
   </main>
 </template>
 
-<script setup>
-import { onMounted } from 'vue'
-
-onMounted(() => {
-  setTimeout(() => {
-    document.querySelectorAll('*').forEach(el => {
-      const rect = el.getBoundingClientRect()
-
-      if (
-        rect.left < -5 ||
-        rect.right > window.innerWidth + 5
-      ) {
-        console.log('Overflow Element:', el)
-      }
-    })
-  }, 1000)
-})
-</script>
-
 <style scoped>
 html, body {
   background-color: #0a0d14; /* Global base black */
@@ -775,7 +756,7 @@ html {
   background: #0a0d14;
   color: #fff;
   font-family: 'Urbanist', sans-serif;
-  overflow-x: clip !important;
+  overflow-x: hidden !important;
   width: 100%; /* Ensure body doesn't exceed viewport */
 }
 
