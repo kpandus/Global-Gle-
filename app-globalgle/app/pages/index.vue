@@ -1109,7 +1109,7 @@ html { scroll-behavior: auto; }
 }
 @media (max-width: 1024px) {
   #footer-reveal-section {
-    margin-top: -4rem; /* Subtle pull-up to reduce gap without breaking the scroll trigger */
+    margin-top: -2.5rem; /* Safe pull-up now that FAQ has higher z-index */
   }
 }
 
@@ -1403,7 +1403,12 @@ html { scroll-behavior: auto; }
   .btn-start, .btn-login { padding: 0.65rem 1.4rem; font-size: 0.88rem; }
 
   /* FAQ */
-  #faq-section { padding: 4rem 5vw; padding-bottom: 2rem;}
+  #faq-section { 
+    padding: 4rem 5vw; 
+    padding-bottom: 1rem; 
+    z-index: 50; /* Lift above footer to allow negative margin without clipping */
+    position: relative;
+  }
 
   .faq-header { font-size: clamp(1.5rem, 6vw, 2.8rem); margin-bottom: 2rem; }
   .faq-q { font-size: 0.93rem; }
@@ -1443,7 +1448,7 @@ html { scroll-behavior: auto; }
 
   /* Footer content alignment — switch to top on mobile to prevent overflow */
   #footer-content {
-    align-items: center; /* Pushed down from flex-start to ensure visibility */
+    align-items: center; /* Balanced position: pushed down but not at the bottom */
     padding: 3rem 5vw 2.5rem;
   }
 
