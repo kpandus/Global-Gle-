@@ -745,11 +745,14 @@ onUnmounted(() => {
 <style scoped>
 html, body {
   background-color: #0a0d14; /* Global base black */
+  o
   margin: 0;
   padding: 0;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: auto; }
+html { 
+  scroll-behavior: auto;
+}
 :global(body) {
   background: #0a0d14;
   color: #fff;
@@ -1397,7 +1400,7 @@ html { scroll-behavior: auto; }
   #hero-title { font-size: clamp(3.9rem, 7vw, 3.2rem); padding: 0 4vw; }
 
    #mobile-glass-box {
-    margin-top: -220px;
+    margin-top: -100px; /* 220 */
     padding-top: 0;
   }
   
