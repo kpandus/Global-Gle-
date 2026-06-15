@@ -581,7 +581,7 @@ onUnmounted(() => {
     <NavBar/>
 
     <div class="fixed-ui-layer">
-      <div class="hero-btns">
+      <div class="hero-btns desktop-only">
         <button class="btn-start">Get Started</button>
         <button class="btn-login">Login</button>
       </div>
@@ -613,7 +613,11 @@ onUnmounted(() => {
     <section id="mobile-traditional-hero" class="mobile-only">
       <div class="m-hero-content">
         <h1>WELCOME TO <span class="highlight">GLOBAL GLE</span></h1>
-        <p>Modern cross-border payment infrastructure for the global economy.</p>
+        <p>Modern cross-border payment infrastructure for the global economy</p>
+        <div class="hero-btns">
+        <button class="btn-start">Get Started</button>
+        <button class="btn-login">Login</button>
+      </div>
         <div class="m-scroll-indicator">Scroll to explore ↓</div>
       </div>
     </section>
@@ -1070,6 +1074,16 @@ html { scroll-behavior: auto; }
   z-index: 0;
 }
 @media (max-width: 768px) {
+  #mobile-traditional-hero .hero-btns {
+    position: static;
+    transform: none;
+    margin-top: 1.5rem;
+    justify-content: center;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
   #faq-section { padding: 4rem 6vw 0; overflow: hidden; }
   .faq-bg-text { font-size: 15rem; top: 60%; }
 }
@@ -1087,7 +1101,7 @@ html { scroll-behavior: auto; }
 #footer-reveal-section {
   position: relative;
   width: 100vw;
-  height: 120vh; /* Increased height to slow down the reveal speed */
+  height: 90vh; /* Increased 120 height to slow down the reveal speed */
   z-index: 30;
 }
 @media (max-width: 1024px) {
@@ -1377,10 +1391,17 @@ html { scroll-behavior: auto; }
 @media (max-width: 768px) {
   /* Hero */
   #hero-title { font-size: clamp(3.9rem, 7vw, 3.2rem); padding: 0 4vw; }
+
+   #mobile-glass-box {
+    margin-top: -80px;
+    padding-top: 0;
+  }
+  
   .btn-start, .btn-login { padding: 0.65rem 1.4rem; font-size: 0.88rem; }
 
   /* FAQ */
-  #faq-section { padding: 4rem 5vw; }
+  #faq-section { padding: 4rem 5vw; padding-bottom: 2rem;}
+
   .faq-header { font-size: clamp(1.5rem, 6vw, 2.8rem); margin-bottom: 2rem; }
   .faq-q { font-size: 0.93rem; }
   #faq-list { max-width: 100%; }
@@ -1435,7 +1456,7 @@ html { scroll-behavior: auto; }
   .btn-start, .btn-login { padding: 0.55rem 1.1rem; font-size: 0.82rem; }
 
   /* FAQ */
-  #faq-section { padding: 3rem 4vw; }
+  #faq-section { padding: 3rem 4vw 2rem; }
   .faq-item { padding: 1rem 0.9rem; }
   .faq-q { font-size: 0.86rem; }
   .faq-a { font-size: 0.82rem; }
@@ -1461,7 +1482,7 @@ html { scroll-behavior: auto; }
   #hero-title { font-size: 1.7rem; }
   .btn-start, .btn-login { padding: 0.5rem 0.9rem; font-size: 0.78rem; }
 
-  #faq-section { padding: 2.5rem 3.5vw; }
+  #faq-section {     padding: 2.5rem 3.5vw 2rem; }
   .faq-q { font-size: 0.82rem; }
   .faq-item { padding: 0.9rem 0.8rem; }
 
