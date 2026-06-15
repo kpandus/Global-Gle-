@@ -554,8 +554,8 @@ onMounted(async () => {
   if (glassBox) {
     ScrollTrigger.create({
       trigger: glassBox,
-      start: 'top 95%',
-      end: 'top 60%',
+      start: 'top 130%',
+      end: 'top 75%',
       scrub: 1.2,
       onUpdate(self) {
         gsap.set(glassBox, {
@@ -894,7 +894,7 @@ html { scroll-behavior: auto; }
   justify-content: center;
   text-align: center;
   padding: 2rem;
-  background: radial-gradient(circle at center, #101a28 0%, #0a0d14 100%);
+  background: linear-gradient(to bottom, #101a28 0%, #0a0d14 100%);
 }
 
 .m-hero-content h1 {
@@ -941,7 +941,7 @@ html { scroll-behavior: auto; }
 
 #mobile-glass-box {
   padding: 2rem 1.5rem 2rem;
-  background: #0a0d14;
+  background: transparent;
 }
 
 .glass-container {
