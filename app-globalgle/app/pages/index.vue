@@ -755,6 +755,7 @@ html { scroll-behavior: auto; }
   color: #fff;
   font-family: 'Urbanist', sans-serif;
   overflow-x: hidden !important;
+  width: 100%; /* Ensure body doesn't exceed viewport */
 }
 
 /* ── UI LAYER ─────────────────────────────────────────────────────────────── */
@@ -872,7 +873,7 @@ html { scroll-behavior: auto; }
 }
 
 .scene-wrapper {
-  width: 100vw;
+  width: 100%; /* Changed to 100% to prevent horizontal scroll */
   height: 300vh;
   position: relative;
   z-index: 5;
@@ -1050,7 +1051,7 @@ html { scroll-behavior: auto; }
 
 /* FAQ */
 #faq-section { 
-  width: 100vw; 
+  width: 100%; /* Changed to 100% to prevent horizontal scroll */
   background: #0a0d14;  
   padding: clamp(2rem, 5vw, 4rem) 6vw 0;
   position: relative; 
@@ -1102,7 +1103,7 @@ html { scroll-behavior: auto; }
 
 #footer-reveal-section {
   position: relative;
-  width: 100vw;
+  width: 100%;
   height: 180vh; /* Increased significantly to ensure top top trigger can be reached and to provide more scroll runway */
   z-index: 30;
 }
@@ -1115,7 +1116,7 @@ html { scroll-behavior: auto; }
 #footer-sticky-wrap {
   position: sticky;
   top: 0;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   background: #0a0d14;
   overflow: hidden;
@@ -1412,19 +1413,19 @@ html { scroll-behavior: auto; }
   /* Footer top — full column stack */
   .footer-top {
     flex-direction: column;
-    gap: 1.8rem;
-    padding-bottom: 2rem;
+    justify-content: flex-start;
+    align-items: flex-start; /* Ensure items don't stretch horizontally if not needed */
+    gap: 0.4rem; /* Minimal gap */
+    padding-bottom: 1rem;
   }
-  .footer-brand { min-width: 100%; }
-  .footer-desc { max-width: 100%; font-size: 0.92rem; margin-bottom: 1.4rem; }
-  .nav-group { min-width: unset; flex: 1; gap: 0.75rem; }
-  .footer-logo { font-size: 1.8rem; margin-bottom: 0.9rem; }
+  .footer-brand { min-width: 100%; flex: none; margin-bottom: 0.2rem; }
+  .footer-desc { max-width: 100%; font-size: 0.9rem; margin-bottom: 0.4rem; line-height: 1.35; }
+  .nav-group { min-width: unset; flex: none; gap: 0.4rem; }
+  .footer-logo { font-size: 1.6rem; margin-bottom: 0.4rem; }
 
   /* Footer nav groups — row layout so Quick Links & Contact sit side by side */
-  .footer-top .nav-group:not(.footer-brand) {
-    flex-direction: column;
-  }
-  .footer-top > :is(.nav-group) { flex-basis: 45%; }
+  /* Removed flex-basis: 45% as it can cause weird stretching in column layout */
+  .footer-top > :is(.nav-group) { flex-basis: auto; }
 
   /* Footer legal — stack vertically on mobile */
   .footer-legal {
