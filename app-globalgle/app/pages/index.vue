@@ -731,9 +731,7 @@ onUnmounted(() => {
                 <a href="#">Privacy</a>
                 <a href="#">Terms</a>
               </div>
-              <div class="legal-right">
-                <span class="status-pulse"></span> Network Active
-              </div>
+             
             </div>
           </footer>
         </div>
