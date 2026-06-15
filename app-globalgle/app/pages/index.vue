@@ -886,7 +886,7 @@ html { scroll-behavior: auto; }
 #mobile-traditional-hero {
   height: 84vh;
   width: 100vw;
-  margin-top: 80px:
+  margin-top: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
