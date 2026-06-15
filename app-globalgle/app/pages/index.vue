@@ -580,23 +580,6 @@ onUnmounted(() => {
   }
   cleanupFns.forEach(fn => fn())
 })
-
-  import { onMounted } from 'vue'
-
-onMounted(() => {
-  setTimeout(() => {
-    document.querySelectorAll('*').forEach(el => {
-      const rect = el.getBoundingClientRect()
-
-      if (
-        rect.left < -5 ||
-        rect.right > window.innerWidth + 5
-      ) {
-        console.log('Overflow Element:', el)
-      }
-    })
-  }, 1000)
-})
 </script>
 
 <template>
