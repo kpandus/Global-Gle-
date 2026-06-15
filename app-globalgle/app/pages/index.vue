@@ -1442,8 +1442,8 @@ html { scroll-behavior: auto; }
 
   /* Footer content alignment — switch to top on mobile to prevent overflow */
   #footer-content {
-    align-items: flex-start;
-    padding: 2.5rem 5vw 1.5rem;
+    align-items: center; /* Pushed down from flex-start to ensure visibility */
+    padding: 3rem 5vw 2.5rem;
   }
 
   /* GLE / W overlay */
