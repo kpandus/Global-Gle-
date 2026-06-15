@@ -745,7 +745,6 @@ onUnmounted(() => {
 <style scoped>
 html, body {
   background-color: #0a0d14; /* Global base black */
-  overflow-x: hidden;
   margin: 0;
   padding: 0;
 }
@@ -757,7 +756,7 @@ html {
   background: #0a0d14;
   color: #fff;
   font-family: 'Urbanist', sans-serif;
-  overflow-x: hidden !important;
+  overflow-x: clip !important;
   width: 100%; /* Ensure body doesn't exceed viewport */
 }
 
@@ -1400,7 +1399,7 @@ html {
   #hero-title { font-size: clamp(3.9rem, 7vw, 3.2rem); padding: 0 4vw; }
 
    #mobile-glass-box {
-    margin-top: -100px;
+    margin-top: -200px;
     padding-top: 0;
   }
   
