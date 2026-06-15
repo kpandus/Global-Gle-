@@ -95,6 +95,7 @@ onMounted(async () => {
 
       const appearanceStart = hh * 0.2
       const appearanceEnd = hh * 0.3
+      
       if (isMobile) {
         // Buttons appear ONLY after passing the Welcome section (100vh)
         if (scrollY < baseH) {
@@ -187,8 +188,8 @@ onMounted(async () => {
         if (threeScene.value?.setOpacity) {
           // On mobile (hh < 0.6*baseH is a proxy for mobile as we set it to 0.5), 
           // we keep it solid and let the sticky behavior handle the exit.
-          const isMobile = hh < (0.6 * baseH)
-          threeScene.value.setOpacity(isMobile ? 1 : exitAlpha)
+          const isMobileNow = hh < (0.6 * baseH)
+          threeScene.value.setOpacity(isMobileNow ? 1 : exitAlpha)
         }
 
         // Title stays longer alone, then snaps away quickly while Drifting DOWN
@@ -870,11 +871,6 @@ html { scroll-behavior: auto; }
   height: 300vh;
   position: relative;
   z-index: 5;
-}
-@media (max-width: 768px) {
-  .scene-wrapper {
-    height: 150vh;
-  }
 }
 @media (max-width: 768px) {
   .scene-wrapper {
