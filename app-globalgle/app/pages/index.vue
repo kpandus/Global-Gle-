@@ -745,7 +745,7 @@ onUnmounted(() => {
 <style scoped>
 html, body {
   background-color: #0a0d14; /* Global base black */
-  overflow-y: hidden;
+  overflow-x: hidden;
   margin: 0;
   padding: 0;
 }
