@@ -1399,7 +1399,7 @@ html {
   #hero-title { font-size: clamp(3.9rem, 7vw, 3.2rem); padding: 0 4vw; }
 
    #mobile-glass-box {
-    margin-top: -200px;
+    margin-top: -220px;
     padding-top: 0;
   }
   
