@@ -46,9 +46,9 @@ onMounted(async () => {
     // If window is narrow (mobile), use a much smaller hero height (0.5) 
     // to prevent "dead scroll" space. iPhone specifically needs this shorter.
     const isSmall = window.innerWidth < 768
-    return (isSmall ? 0.45 : 0.8) * baseH
+    return (isSmall ? 0.4 : 0.8) * baseH
   }
-  const getSceneH = () => (window.innerWidth < 768 ? 1.5 : 3.0) * baseH
+  const getSceneH = () => (window.innerWidth < 768 ? 0.8 : 3.0) * baseH
 
   // ─── HERO & TRAVEL LOGIC ──────────────────────────────────────────────────
   const title = $('#hero-title')
@@ -880,13 +880,13 @@ html { scroll-behavior: auto; }
 }
 @media (max-width: 768px) {
   .scene-wrapper {
-    height: 150vh;
+    height: 100vh;
   }
 }
 
 /* MOBILE TRADITIONAL FLOW */
 #mobile-traditional-hero {
-  height: 84vh;
+  height: 75vh;
   width: 100vw;
   margin-top: 80px;
   display: flex;
@@ -1397,7 +1397,7 @@ html { scroll-behavior: auto; }
   #hero-title { font-size: clamp(3.9rem, 7vw, 3.2rem); padding: 0 4vw; }
 
    #mobile-glass-box {
-    margin-top: -80px;
+    margin-top: -220px;
     padding-top: 0;
   }
   
@@ -1449,8 +1449,8 @@ html { scroll-behavior: auto; }
 
   /* Footer content alignment — switch to top on mobile to prevent overflow */
   #footer-content {
-    align-items: center; 
-    padding: 3rem 5vw 0rem; /* Removed bottom padding to eliminate excess space as requested */
+    align-items: flex-end; 
+    padding: 3rem 5vw 2rem; /* Restored some bottom padding for breathing room at the bottom */
   }
 
   /* GLE / W overlay */
