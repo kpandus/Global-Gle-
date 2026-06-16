@@ -55,7 +55,7 @@ onMounted(() => {
   scene.add(sun)
 
   // Load texture
-  const texture = new THREE.TextureLoader().load('/earth-texture.png')
+  const texture = new THREE.TextureLoader().load('/globe.jpg')
 
   // Build fragments — 3 vertical segments
   const getRadius = () => {
