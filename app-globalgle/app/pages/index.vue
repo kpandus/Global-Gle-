@@ -54,6 +54,7 @@ onMounted(async () => {
   const title = $('#hero-title')
   const partnerText = $('#partner-text')
   const btns = $('.hero-btns')
+  const mobileBtns = $('#mobile-hero-btns')
   const globeCanvas = $('#globe-canvas')
 
   gsap.set(title, { opacity: 0 })
@@ -100,9 +101,11 @@ onMounted(async () => {
         // Buttons appear ONLY after passing the Welcome section (100vh)
         if (scrollY < baseH) {
           gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
+          gsap.set(mobileBtns, { opacity: 0, pointerEvents: 'none' })
         } else {
           const appearP = Math.min(1, (scrollY - baseH) / 200)
           gsap.set(btns, { opacity: appearP, pointerEvents: appearP > 0.5 ? 'all' : 'none' })
+          gsap.set(mobileBtns, { opacity: appearP, pointerEvents: appearP > 0.5 ? 'all' : 'none' })
         }
       } else {
         const btnsFadeEnd = appearanceEnd + baseH
@@ -620,10 +623,10 @@ onUnmounted(() => {
       <div class="m-hero-content">
         <h1>WELCOME TO <span class="highlight">GLOBAL GLE</span></h1>
         <p>Modern cross-border payment infrastructure for the global economy</p>
-        <div class="hero-btns">
-        <button class="btn-start">Get Started</button>
-        <button class="btn-login">Login</button>
-      </div>
+        <div id="mobile-hero-btns" class="hero-btns">
+          <button class="btn-start">Get Started</button>
+          <button class="btn-login">Login</button>
+        </div>
         <div class="m-scroll-indicator">Scroll to explore ↓</div>
       </div>
     </section>
@@ -877,6 +880,11 @@ html {
   height: 300vh;
   position: relative;
   z-index: 5;
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .scene-wrapper {
+    height: 180vh; /* Shorter scroll runway on tablet */
+  }
 }
 @media (max-width: 768px) {
   .scene-wrapper {
@@ -1389,6 +1397,34 @@ html {
 
   /* Footer legal */
   .footer-legal { padding-top: 2rem; }
+
+  /* Footer content: slightly above center (not bottom, not center) */
+  #footer-content {
+    align-items: center;
+    padding-top: 0;
+    padding-bottom: 15vh; /* Nudge above true center */
+  }
+}
+
+/* Tablet (769px–1024px) layout fixes */
+@media (min-width: 769px) and (max-width: 1024px) {
+  #mobile-traditional-hero {
+    height: 35vh;
+  }
+  /* Override absolute positioning so buttons sit naturally below the paragraph */
+  #mobile-traditional-hero .hero-btns {
+    position: static;
+    transform: none;
+    margin-top: 1.5rem;
+    justify-content: center;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    background: transparent;
+    border: none;
+    padding: 0;
+    backdrop-filter: none;
+  }
 }
 
 /* Mobile (≤768px) */
