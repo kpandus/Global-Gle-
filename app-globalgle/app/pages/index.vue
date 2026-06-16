@@ -892,7 +892,7 @@ html {
 }
 @media (max-width: 768px) {
   .scene-wrapper {
-    height: 100vh;
+    height: 130vh;
   }
 }
 
