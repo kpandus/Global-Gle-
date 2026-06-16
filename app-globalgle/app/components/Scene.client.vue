@@ -77,17 +77,25 @@ function setLighting(scene) {
   }
 }
 
-const getDisplayMode = () => {
-  if (typeof window === 'undefined') return { isDesktop: true, isMobile: false, isLargeScreen: true }
-  
-  const isLargeScreen = window.innerWidth > 1024
-  const isAndroid = /Android/i.test(navigator.userAgent)
-  const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent)
-  
-  const isDesktop = isLargeScreen || isAndroid || isIPhone
-  return { isDesktop, isMobile: window.innerWidth < 768, isLargeScreen }
-}
+/* fix 1 */
 
+const getDisplayMode = () => {
+  if (typeof window === 'undefined') {
+    return {
+      isDesktop: true,
+      isMobile: false,
+      isLargeScreen: true
+    }
+  }
+
+  const isLargeScreen = window.innerWidth > 1024
+
+  return {
+    isDesktop: isLargeScreen,
+    isMobile: window.innerWidth <= 1024,
+    isLargeScreen
+  }
+}
 onMounted(async () => {
   if (!canvasDiv.value) return
   await new Promise(r => setTimeout(r, 50))
@@ -241,6 +249,8 @@ onMounted(async () => {
     if (armR) armR.rotation.set(-1.57, 0, 0)
 
     scene.add(character)
+    renderer.compile(scene, camera)
+    renderer.render(scene, camera)
     character.rotation.y = 0
     headBone = character.getObjectByName('spine006')
 
@@ -417,15 +427,15 @@ onMounted(async () => {
         }
       } else {
         // MOBILE / IPHONE FLOW (Safety fallback)
-        const easedP = Math.pow(p, 3) 
+        const easedP = Math.pow(p, 1.5) 
         const alpha = easedP * globalAlpha
         
-        // Cumulative scale: lerp from baseScale to 1.0, then apply subtle mobile multiplier (e.g. 0.85)
-        let sVal = (baseScale + (easedP * (1.0 - baseScale))) * 0.85
+        // Cumulative scale: lerp from baseScale to 1.0, then apply subtle mobile multiplier (e.g. 0.65)
+        let sVal = (baseScale + (easedP * (1.0 - baseScale))) * 0.65
         
         // Ensure character is centered and correctly positioned
         character.scale.set(sVal, sVal, sVal)
-        character.position.x = -0.8
+        character.position.x = -0.35
         character.position.y = 0 
         character.rotation.y = 0
         
@@ -449,8 +459,8 @@ onMounted(async () => {
         })
         
         // Improved camera framing for mobile to ensure proper centering
-        camera.position.set(0, 14, 28)
-        camera.lookAt(0, 8.5, 0)
+        camera.position.set(0, 12.5, 34)
+        camera.lookAt(0, 10.5, 0)
       }
 
       renderer.render(scene, camera)
