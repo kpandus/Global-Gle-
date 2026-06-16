@@ -301,7 +301,7 @@ onMounted(async () => {
         let s3p = 0 
 
         if (p < 0.15) {
-          soloOpacity = Math.pow(p / 0.15, 2)
+          soloOpacity = 1
           s3p = 0
         } else if (p < 0.35) {
           soloOpacity = 1
