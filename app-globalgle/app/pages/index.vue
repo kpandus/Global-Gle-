@@ -98,18 +98,11 @@ onMounted(async () => {
       const appearanceEnd = hh * 0.3
       
       if (isMobile) {
-        // Buttons appear ONLY after passing the Welcome section (100vh)
-        if (scrollY < baseH) {
-          gsap.set(btns, { opacity: 0, pointerEvents: 'none' })
-          gsap.set(mobileBtns, { opacity: 0, pointerEvents: 'none' })
-        } else {
-          const appearP = Math.min(1, (scrollY - baseH) / 200)
-          gsap.set(btns, { opacity: appearP, pointerEvents: appearP > 0.5 ? 'all' : 'none' })
-          gsap.set(mobileBtns, { opacity: appearP, pointerEvents: appearP > 0.5 ? 'all' : 'none' })
-        }
+        // Mobile buttons are static in the hero — no JS scroll control, they scroll away naturally
       } else {
-        const btnsFadeEnd = appearanceEnd + baseH
-        const btnsFadeStart = btnsFadeEnd - 100
+        // Sync button fade to globe fade: hh*0.55 → hh*0.73 (matches globeFadeP)
+        const btnsFadeStart = hh * 0.55
+        const btnsFadeEnd = hh * 0.73
         if (scrollY < btnsFadeStart) {
           gsap.set(btns, { opacity: 1, pointerEvents: 'all' })
         } else if (scrollY < btnsFadeEnd) {
@@ -836,16 +829,24 @@ html {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 9rem;
+  top: 40vh;
   z-index: 101;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: max-content;
 }
 @media (max-width: 768px) {
   .hero-btns {
-    top: 27%; /* Final adjustment requested by the user */
+    top: 27%;
     bottom: auto;
   }
+}
+/* Mobile inline buttons stay in page flow — scroll away naturally */
+#mobile-hero-btns {
+  position: static;
+  transform: none;
+  left: auto;
+  top: auto;
+  margin: 1.2rem auto 0;
 }
 .btn-start { padding: 0.6rem 1.8rem; border-radius: 100px; font-weight: 600; cursor: pointer; color: #fff; background: rgba(0,80,40,0.85); border: 1.5px solid rgba(0,255,136,0.86); font-size: clamp(0.75rem, 2vw, 1rem); }
 .btn-login { padding: 0.6rem 1.8rem; border-radius: 100px; cursor: pointer; color: rgba(255,255,255,0.78); background: transparent; border: none; font-size: clamp(0.75rem, 2vw, 1rem); }
