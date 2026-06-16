@@ -83,8 +83,10 @@ const getDisplayMode = () => {
   const isLargeScreen = window.innerWidth > 1024
   const isAndroid = /Android/i.test(navigator.userAgent)
   const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+  // Modern iPadOS (M-series) reports a Mac user agent — detect via touch + Mac UA
+  const isIPadOS = !isIPhone && navigator.maxTouchPoints > 1 && /Mac/i.test(navigator.userAgent)
   
-  const isDesktop = isLargeScreen || isAndroid || isIPhone
+  const isDesktop = isLargeScreen || isAndroid || isIPhone || isIPadOS
   return { isDesktop, isMobile: window.innerWidth < 768, isLargeScreen }
 }
 
