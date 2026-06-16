@@ -171,8 +171,8 @@ onMounted(async () => {
         // On mobile, the scene should start appearing later, after ALL traditional sections
         // Welcome (100vh) + Text Info (~800px) + Glass Box (~700px)
         const mOffset = 0 
-        const sceneStart = 0
-        const sceneEnd = hh + (sh * 0.55)
+        const sceneStart = (hh * 0.05) + mOffset
+        const sceneEnd = hh + (sh * 0.7) + mOffset
         const sceneP = Math.max(0, Math.min(1, (scrollY - sceneStart) / (sceneEnd - sceneStart)))
         
         // Pass the pre-smoothed (scrubbed) progress to the 3D scene
@@ -571,13 +571,9 @@ onMounted(async () => {
   }
 
   // Ensure ScrollTrigger is aware of final heights after character/content finishes loading
-  requestAnimationFrame(() => {
-  ScrollTrigger.refresh()
-})
-
-setTimeout(() => {
-  ScrollTrigger.refresh()
-}, 500)
+  setTimeout(() => {
+    ScrollTrigger.refresh()
+  }, 1500)
 
 }) // ← onMounted closes here ✅
 
@@ -892,7 +888,7 @@ html {
 }
 @media (max-width: 768px) {
   .scene-wrapper {
-    height: 130vh;
+    height: 100vh;
   }
 }
 
